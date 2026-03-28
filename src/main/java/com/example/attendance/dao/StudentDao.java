@@ -1,7 +1,6 @@
 package com.example.attendance.dao;
 
 import com.example.attendance.entity.Student;
-import com.example.attendance.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
