@@ -9,7 +9,7 @@ USE attendance_system;
 GO
 
 -- 用户表
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name='user')
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE type='U' AND name=N'[user]')
 CREATE TABLE [user] (
                         user_id INT IDENTITY(1,1) PRIMARY KEY,
                         username NVARCHAR(50) NOT NULL UNIQUE,
