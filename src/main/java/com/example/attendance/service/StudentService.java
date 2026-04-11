@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class StudentService {
+public interface StudentService {
 
 
     public abstract String courses();

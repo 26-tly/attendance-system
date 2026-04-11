@@ -1,4 +1,5 @@
 package com.example.attendance.service.impl;
+
 import com.example.attendance.entity.Student;
 import com.example.attendance.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,24 +10,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.ArrayList;
 import java.util.List;
 
-
 @Service
+// 修正：接口用 implements，不是 extends
+public class StudentServiceImpl implements StudentService {
 
-
-public class StudentServiceImpl extends StudentService {
+    // ❶ 删除多余的 self 注入：private StudentService studentService;
+    // ❷ 给 StudentDao 加 @Autowired，完成注入
     @Autowired
-    private StudentService studentService;
     private StudentDao studentDao;
-    private Student student;
 
     @Override
     public String courses(){
-        List<String> courses=new ArrayList<>();
+        List<String> courses = new ArrayList<>();
         courses.add("javaEE开发实践");
         courses.add("大学物理实验");
         courses.add("机械学习与数据挖掘");
         return courses.toString();
     }
+
     @Override
     public List<Student> getStudentList(
             @RequestParam("className") String className,
@@ -36,6 +37,7 @@ public class StudentServiceImpl extends StudentService {
         students.add(new Student("敬凌杰", "42411026"));
         return students;
     }
+
     @Override
     public Student getStudentInfo(String studentId){
         Student student = new Student();
@@ -59,5 +61,4 @@ public class StudentServiceImpl extends StudentService {
         studentDao.insert(student);
         return "创建成功";
     }
-
 }
