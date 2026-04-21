@@ -30,6 +30,19 @@
         <java.version>17</java.version>
     </properties>
     <dependencies>
+        <!-- SpringBoot Data JPA ORM持久层依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- 你已经有的SQLServer微软官方JDBC驱动 -->
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
 
         <!-- SQL Server JDBC 驱动（Microsoft 官方） -->
         <dependency>

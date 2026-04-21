@@ -1,0 +1,72 @@
+package com.example.attendance.jpa.controller;
+import com.example.attendance.jpa.entity.User;
+import com.example.attendance.jpa.service.JpaUserService;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+/**
+ * JPA版用户控制器，和老JDBC接口功能完全对齐
+ */
+@RestController
+@RequestMapping("/jpa/user") // 接口前缀，和老接口区分开
+public class JpaUserController {
+    // 注入JPA的Service
+    private JpaUserService jpaUserService;
+
+    /**
+     * 新增用户
+     * POST 请求：http://localhost:8080/jpa/user/add
+     */
+    @PostMapping("/add")
+    public String addUser(@RequestBody User user) {
+        int rows = jpaUserService.addUser(user);
+        return rows > 0 ? "新增成功" : "新增失败";
+    }
+
+    /**
+     * 根据ID查询用户
+     * GET 请求：http://localhost:8080/jpa/user/find/1
+     */
+    @GetMapping("/find/{userId}")
+    public User findById(@PathVariable Integer userId) {
+        return jpaUserService.findById(userId);
+    }
+
+    /**
+     * 根据用户名查询用户
+     * GET 请求：http://localhost:8080/jpa/user/find/username?username=xxx
+     */
+    @GetMapping("/find/username")
+    public User findByUsername(@RequestParam String username) {
+        return jpaUserService.findByUsername(username);
+    }
+
+    /**
+     * 查询所有教师用户
+     * GET 请求：http://localhost:8080/jpa/user/teachers
+     */
+    @GetMapping("/teachers")
+    public List<User> findAllTeachers() {
+        return jpaUserService.findAllTeachers();
+    }
+
+    /**
+     * 更新用户信息
+     * PUT 请求：http://localhost:8080/jpa/user/update
+     */
+    @PutMapping("/update")
+    public String updateUser(@RequestBody User user) {
+        int rows = jpaUserService.updateUser(user);
+        return rows > 0 ? "更新成功" : "更新失败";
+    }
+
+    /**
+     * 根据ID删除用户
+     * DELETE 请求：http://localhost:8080/jpa/user/delete/1
+     */
+    @DeleteMapping("/delete/{userId}")
+    public String deleteById(@PathVariable Integer userId) {
+        int rows = jpaUserService.deleteById(userId);
+        return rows > 0 ? "删除成功" : "删除失败";
+    }
+}
