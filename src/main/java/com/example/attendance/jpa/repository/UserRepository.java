@@ -10,9 +10,9 @@ public interface UserRepository extends JpaRepository<User,Long> {
     //根据用户名查询用户
     User findByUsername(String username);
     //查询所有教师用户
-    List<User> findAllTeachers();
+    List<User> findByUserRole(String userRole);
 
-    Optional<User> findById(Integer userId);
+    Optional<User> findByUserId(Integer userId);
 
-    void deleteById(Integer userId);
+    void deleteByUserId(Integer userId);
 }

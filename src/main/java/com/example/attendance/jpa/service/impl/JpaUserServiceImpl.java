@@ -26,8 +26,8 @@ public class JpaUserServiceImpl implements JpaUserService {
      * 根据id查询用户
      */
     @Override
-    public User findById(Integer userId) {
-        Optional<User> optional = userRepository.findById(userId);
+    public User findByUserId(Integer userId) {
+        Optional<User> optional = userRepository.findByUserId(userId);
         // 找不到返回null，和老代码行为一致
         return optional.orElse(null);
     }
@@ -44,9 +44,9 @@ public class JpaUserServiceImpl implements JpaUserService {
      * 查询所有教师用户（假设user_role为teacher是教师）
      */
     @Override
-    public List<User> findAllTeachers() {
+    public List<User> findByUserRole(String userRole) {
         // 调用Repository自定义方法，查询角色为teacher的用户
-        return userRepository.findAllTeachers();
+        return userRepository.findByUserRole(userRole);
     }
 
     /**
@@ -63,8 +63,8 @@ public class JpaUserServiceImpl implements JpaUserService {
      * 根据id删除用户
      */
     @Override
-    public int deleteById(Integer userId) {
-        userRepository.deleteById(userId);
+    public int deleteByUserId(Integer userId) {
+        userRepository.deleteByUserId(userId);
         return 1;
     }
 }

@@ -28,8 +28,8 @@ public class JpaUserController {
      * GET 请求：http://localhost:8080/jpa/user/find/1
      */
     @GetMapping("/find/{userId}")
-    public User findById(@PathVariable Integer userId) {
-        return jpaUserService.findById(userId);
+    public User findByUserId(@PathVariable Integer userId) {
+        return jpaUserService.findByUserId(userId);
     }
 
     /**
@@ -46,8 +46,8 @@ public class JpaUserController {
      * GET 请求：http://localhost:8080/jpa/user/teachers
      */
     @GetMapping("/teachers")
-    public List<User> findAllTeachers() {
-        return jpaUserService.findAllTeachers();
+    public List<User> findUserRole(@RequestParam String userRole) {
+        return jpaUserService.findByUserRole(userRole);
     }
 
     /**
@@ -66,7 +66,7 @@ public class JpaUserController {
      */
     @DeleteMapping("/delete/{userId}")
     public String deleteById(@PathVariable Integer userId) {
-        int rows = jpaUserService.deleteById(userId);
+        int rows = jpaUserService.deleteByUserId(userId);
         return rows > 0 ? "删除成功" : "删除失败";
     }
 }

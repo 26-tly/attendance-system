@@ -7,13 +7,15 @@ public interface JpaUserService {
 
     int addUser(User user);
 
-    User findById(Integer userId);
+    User findByUserId(Integer userId);
 
     User findByUsername(String username);
 
-    List<User> findAllTeachers();
+    List<User> findByUserRole(String userRole);
+
+
 
     int updateUser(User user);
 
-    int deleteById(Integer userId);
+    int deleteByUserId(Integer userId);
 }

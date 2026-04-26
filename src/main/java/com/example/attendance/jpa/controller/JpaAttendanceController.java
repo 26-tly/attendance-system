@@ -1,10 +1,10 @@
 package com.example.attendance.jpa.controller;
 import com.example.attendance.jpa.entity.Attendance;
 import com.example.attendance.jpa.service.JpaAttendanceService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
 import java.time.LocalDate;
 import java.util.List;
 /**
@@ -13,7 +13,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/attendance")
-@RequiredArgsConstructor
 public class JpaAttendanceController {
     private final JpaAttendanceService jpaAttendanceService;
     // ====================== 单一条件查询接口 ======================
@@ -107,5 +106,72 @@ public class JpaAttendanceController {
     public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
         jpaAttendanceService.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+
+
+    // 这里注入的是接口，不是实现类
+    public JpaAttendanceController(JpaAttendanceService jpaAttendanceService) {
+        this.jpaAttendanceService = jpaAttendanceService;
+    }
+
+    /**
+     *
+     * @param pageNum
+     * @param pageSize
+     * @param sortField 排序字段：attendanceDate,userId,courseId
+     * @param sortDir 排序方向
+     * @return
+     * 基础分页+排序
+     */
+    @GetMapping("/list")
+    public Page<Attendance> listAttendance(
+            @RequestParam(defaultValue = "0") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "attendanceDate") String sortField,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        return jpaAttendanceService.listAttendance(pageNum, pageSize,sortField,sortDir);
+    }
+    @GetMapping("/list/course")
+    public Page<Attendance> listByCourse(
+            @RequestParam(required = false) Integer courseId,
+            @RequestParam(defaultValue = "0") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "attendanceDate") String sortField,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ){
+        return jpaAttendanceService.listByCourseId( courseId,pageNum,pageSize,sortField,sortDir);
+    }
+
+    /**
+     *
+     * @param courseId
+     * @param userId
+     * @param status
+     * @param startDate
+     * @param endDate
+     * @param pageNum
+     * @param pageSize
+     * @param sortField
+     * @param sortDir
+     * @return
+     * 多条件筛选+分页+排序
+     */
+    @GetMapping("/list/conditions")
+    public Page<Attendance> listAttendanceWithConditions(
+            @RequestParam(required = false) Integer courseId,
+            @RequestParam(required = false) Integer userId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(defaultValue = "0") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "attendanceDate") String sortField,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        return jpaAttendanceService.listAttendanceWithConditions(
+                courseId, userId, status, startDate, endDate, pageNum, pageSize,sortField,sortDir
+        );
     }
 }
