@@ -171,7 +171,7 @@ public class JpaAttendanceController {
             @RequestParam(defaultValue = "desc") String sortDir
     ) {
         return jpaAttendanceService.listAttendanceWithConditions(
-                courseId, userId, status, startDate, endDate, pageNum, pageSize,sortField,sortDir
+                courseId, userId, status, startDate, endDate, pageNum, pageSize, sortField, sortDir
         );
     }
 }

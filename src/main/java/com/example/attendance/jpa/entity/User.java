@@ -20,13 +20,7 @@ public class User {
     @Column(name="user_id")
     private Integer userId;
 
-    public Integer getUserId() {
-        return userId;
-    }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
 
     @Column(name="username",nullable = false,unique = true,length = 50)
     private String username;

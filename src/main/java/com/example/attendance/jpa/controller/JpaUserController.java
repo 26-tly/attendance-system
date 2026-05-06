@@ -1,7 +1,12 @@
 package com.example.attendance.jpa.controller;
+
+import com.example.attendance.dto.RegisterRequest;
 import com.example.attendance.jpa.entity.User;
 import com.example.attendance.jpa.service.JpaUserService;
+import com.example.attendance.dto.LoginRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.List;
 /**
@@ -68,5 +73,15 @@ public class JpaUserController {
     public String deleteById(@PathVariable Integer userId) {
         int rows = jpaUserService.deleteByUserId(userId);
         return rows > 0 ? "删除成功" : "删除失败";
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest){
+        return ResponseEntity.ok(jpaUserService.login(loginRequest));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest){
+        return ResponseEntity.ok(jpaUserService.register(registerRequest));
     }
 }

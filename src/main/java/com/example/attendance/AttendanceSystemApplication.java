@@ -2,18 +2,15 @@ package com.example.attendance;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 @SpringBootApplication//这个注解告诉SpringBoot这是应用的主入口
 
 @RestController//这个注解声明这是一个控制器，用于处理HTTP请求
-
+@EnableMethodSecurity
 
 
 
