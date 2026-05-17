@@ -80,8 +80,21 @@ public class JpaUserController {
         return ResponseEntity.ok(jpaUserService.login(loginRequest));
     }
 
+    @GetMapping("/toLogin/")
+    public String toLogin(){
+        return "login";
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest){
         return ResponseEntity.ok(jpaUserService.register(registerRequest));
+    }
+    @GetMapping("/toRegister/")
+    public String toRegister(){
+        return "register";
+    }
+    @GetMapping("/index/")
+    public String toIndex(){
+        return "index";
     }
 }

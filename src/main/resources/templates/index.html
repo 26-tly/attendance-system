@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>系统首页</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background: #1a73e8;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .content {
+            padding: 30px;
+            text-align: center;
+        }
+        .logout-btn {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            background: #dc3545;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>考勤管理系统</h1>
+        <a th:href="@{/logout}" class="logout-btn">退出登录</a>
+    </div>
+    <div class="content">
+        <h2>欢迎来到系统首页！</h2>
+        <p>你已成功登录，可以使用系统功能。</p>
+    </div>
+
+</body>
+</html>
