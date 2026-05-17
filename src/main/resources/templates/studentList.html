@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>学生列表</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4>学生列表</h4>
+            <button class="btn btn-light" onclick="location.href='studentForm.html'">
+                <i class="bi bi-plus-lg"></i> 新增学生
+            </button>
+        </div>
+        <div class="card-body">
+            <!-- 搜索框 -->
+            <div class="mb-3">
+                <input type="text" id="keyword" class="form-control" placeholder="按学号/姓名搜索" onkeyup="loadData()">
+            </div>
+
+            <!-- 批量删除按钮 -->
+            <button class="btn btn-danger mb-3" onclick="batchDelete()">
+                <i class="bi bi-trash"></i> 批量删除
+            </button>
+
+            <!-- 学生表格 -->
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" id="checkAll" onchange="toggleCheckAll()"></th>
+                    <th>学号</th>
+                    <th>姓名</th>
+                    <th>性别</th>
+                    <th>出生日期</th>
+                    <th>联系方式</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                <!-- 数据由JS动态渲染 -->
+                </tbody>
+            </table>
+
+            <!-- 分页 -->
+            <div class="d-flex justify-content-between align-items-center">
+                <span id="pageInfo"></span>
+                <div>
+                    <button class="btn btn-outline-primary me-2" onclick="prevPage()">上一页</button>
+                    <button class="btn btn-outline-primary" onclick="nextPage()">下一页</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 后端基础地址（和你的后端端口一致，这里是8080）
+    const BASE_URL = "http://localhost:8080";
+    let currentPage = 0;
+    const pageSize = 10;
+
+    // 页面加载时获取数据
+    window.onload = function() {
+        loadData();
+    };
+
+    // 加载学生列表数据（匹配后端 GET /list 接口）
+    function loadData() {
+        const keyword = document.getElementById('keyword').value;
+        // 正确路径：http://localhost:8080/list，没有/student前缀
+        fetch(`${BASE_URL}/list?keyword=${keyword}&page=${currentPage}&size=${pageSize}`)
+            .then(res => {
+                if (!res.ok) throw new Error('请求失败');
+                return res.json();
+            })
+            .then(data => {
+                const tbody = document.getElementById('studentTableBody');
+                tbody.innerHTML = '';
+                data.content.forEach(student => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><input type="checkbox" class="student-checkbox" value="${student.id}"></td>
+                        <td>${student.studentNo}</td>
+                        <td>${student.name}</td>
+                        <td>${student.gender}</td>
+                        <td>${student.birthDate}</td>
+                        <td>${student.phone}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-1" onclick="editStudent(${student.id})">编辑</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteStudent(${student.id})">删除</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // 更新分页信息
+                document.getElementById('pageInfo').innerText = `第 ${data.number + 1} 页 / 共 ${data.totalPages} 页`;
+            })
+            .catch(err => {
+                console.error('加载列表失败:', err);
+                alert('加载学生列表失败，请检查后端是否正常运行');
+            });
+    }
+
+    // 编辑学生
+    function editStudent(id) {
+        location.href = `studentForm.html?id=${id}`;
+    }
+
+    // 删除单个学生（匹配后端 DELETE /{id} 接口）
+    function deleteStudent(id) {
+        if (confirm('确定要删除该学生吗？')) {
+            fetch(`${BASE_URL}/${id}`, { method: 'DELETE' })
+                 .then(res => {
+                     if (!res.ok) throw new Error('删除失败');
+                     return res.json();
+                 })
+                 .then(() => {
+                     alert('删除成功！');
+                     loadData();
+                 })
+                 .catch(err => {
+                     console.error('删除失败:', err);
+                     alert('删除失败，请检查后端是否正常运行');
+                 });
+         }
+     }
+     // 批量删除（匹配后端 DELETE /batchDelete 接口）
+     function batchDelete() {
+         const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+         if (checkboxes.length === 0) {
+             alert('请选择要删除的学生');
+             return;
+         }
+         if (confirm(`确定要删除选中的 ${checkboxes.length} 个学生吗？`)) {
+             const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+             fetch(`${BASE_URL}/batchDelete`, {
+                 method: 'DELETE',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify(ids)
+             })
+             .then(res => {
+                 if (!res.ok) throw new Error('批量删除失败');
+                 return res.json();
+             })
+             .then(() => {
+                 alert('批量删除成功！');
+                 loadData();
+             })
+             .catch(err => {
+                 console.error('批量删除失败:', err);
+                 alert('批量删除失败，请检查后端是否正常运行');
+             });
+         }
+     }
+     // 全选/取消全选
+     function toggleCheckAll() {
+         const checkAll = document.getElementById('checkAll').checked;
+         document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = checkAll);
+     }
+     // 上一页
+     function prevPage() {
+         if (currentPage > 0) {
+             currentPage--;
+             loadData();
+         }
+     }
+     // 下一页
+     function nextPage() {
+         currentPage++;
+         loadData();
+     }
+</script>
+</body>
+</html>

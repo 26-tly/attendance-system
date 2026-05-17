@@ -9,7 +9,7 @@ import com.example.attendance.service.StudentService;
 import java.util.List;
 
 @RestController
-
+@RequestMapping("/student")
 public class StudentController {
     @GetMapping("/student/info/{studentId}")
     public Result<Student> getStudentInfo(@PathVariable ("studentId") String studentId) {

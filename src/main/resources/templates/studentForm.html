@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>学生表单</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 id="formTitle">新增学生</h4>
+        </div>
+        <div class="card-body">
+            <form id="studentForm">
+                <!-- 隐藏ID，用于编辑时回显和提交 -->
+                <input type="hidden" id="id">
+
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label">学号 <span class="text-danger">*</span></label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="studentNo" placeholder="请输入学号" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label">姓名 <span class="text-danger">*</span></label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="name" placeholder="请输入姓名" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label">性别 <span class="text-danger">*</span></label>
+                    <div class="col-sm-10">
+                        <select class="form-select" id="gender" required>
+                            <option value="">请选择</option>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label">出生日期 <span class="text-danger">*</span></label>
+                    <div class="col-sm-10">
+                        <input type="date" class="form-control" id="birthDate" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label">联系方式 <span class="text-danger">*</span></label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="phone" placeholder="请输入手机号" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-10 offset-sm-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> 提交
+                        </button>
+                        <a href="studentList.html" class="btn btn-secondary ms-2">
+                            <i class="bi bi-arrow-left"></i> 返回列表
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const BASE_URL = "http://localhost:8080";
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('id');
+
+    if (editId) {
+        document.getElementById('formTitle').innerText = '编辑学生信息';
+        fetch(`${BASE_URL}/${editId}`)
+            .then(res => res.json())
+            .then(student => {
+                document.getElementById('id').value = student.id;
+                document.getElementById('studentNo').value = student.studentNo;
+                document.getElementById('name').value = student.name;
+                document.getElementById('gender').value = student.gender;
+                document.getElementById('birthDate').value = student.birthDate;
+                document.getElementById('phone').value = student.phone;
+            })
+            .catch(err => console.error('加载数据失败:', err));
+    }
+
+    document.getElementById('studentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const student = {
+            id: document.getElementById('id').value || null,
+            studentNo: document.getElementById('studentNo').value,
+            name: document.getElementById('name').value,
+            gender: document.getElementById('gender').value,
+            birthDate: document.getElementById('birthDate').value,
+            phone: document.getElementById('phone').value
+        };
+
+        const method = student.id ? 'PUT' : 'POST';
+        const url = student.id ? `${BASE_URL}/update` : `${BASE_URL}/add`;
+
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(student)
+        })
+        .then(res => {
+            if (res.ok) {
+                alert(editId ? '修改成功！' : '添加成功！');
+                location.href = `studentList.html?t=${Date.now()}`;
+            } else {
+                throw new Error('请求失败');
+            }
+        })
+        .catch(err => {
+            console.error('请求错误:', err);
+            alert('操作失败：未知错误');
+        });
+    });
+</script>
+</body>
+</html>
