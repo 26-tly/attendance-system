@@ -1,121 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>用户登录</title>
+    <title>登录</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: "Microsoft YaHei", sans-serif;
-        }
-        body {
-            background: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .login-box {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            width: 400px;
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 25px;
-            color: #1a73e8;
-        }
-        .success-msg {
-            color: #28a745;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        .error-msg {
-            color: #dc3545;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #1557b0;
-        }
-        .register-link {
-            text-align: center;
-            margin-top: 15px;
-        }
+        * {margin:0;padding:0;box-sizing:border-box;font-family: "Microsoft YaHei"}
+        body {background:#f0f2f5;display:flex;justify-content:center;align-items:center;height:100vh}
+        .box {background:white;padding:30px;border-radius:8px;width:400px;box-shadow:0 2px 10px #0000001a}
+        h2 {text-align:center;margin-bottom:20px;color:#1a73e8}
+        .form-group {margin-bottom:15px}
+        label {display:block;margin-bottom:5px}
+        input {width:100%;padding:10px;border:1px solid #ddd;border-radius:4px}
+        button {width:100%;padding:10px;background:#1a73e8;color:white;border:none;border-radius:4px;margin-top:10px}
+        .tip {text-align:center;margin-top:15px}
+        a {color:#1a73e8}
     </style>
 </head>
 <body>
-<div class="login-box">
+<div class="box">
     <h2>用户登录</h2>
-    <!-- 注册成功提示 -->
-    <div class="success-msg" th:if="${param.success}">注册成功，请登录！</div>
-    <!-- 登录失败提示 -->
-    <div class="error-msg" th:if="${param.error}">用户名或密码错误！</div>
-    <form th:action="@{/login}" method="post">
+    <form id="loginForm">
         <div class="form-group">
             <label>用户名</label>
-            <input type="text" name="username" placeholder="请输入用户名" required>
+            <input type="text" id="username">
         </div>
         <div class="form-group">
             <label>密码</label>
-            <input type="password" name="password" placeholder="请输入密码" required>
+            <input type="password" id="password">
         </div>
         <button type="submit">登录</button>
+        <div class="tip">没有账号 <a href="/register">去注册</a></div>
     </form>
-    <div class="register-link">
-        没有账号？<a th:href="@{/register}">立即注册</a>
-    </div>
 </div>
+
 <script>
-    function doRegister(){
-        let data={
-            username:document.getElementById("username").value,
-            password:document.getElementById("pwd").value,
-            confirmPassword:document.getElementById("repwd").value
-        }
-        fetch("/auth/register",{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify(data)
-        }).then(res=>res.json()).then(res=>{
-            if(res.success){
-                alert("注册成功，前往登录！")
-                // 注册成功自动跳登录页
-                location.href="login.html"
-            }else{
-                alert(res.message)
-            }
+    document.getElementById("loginForm").addEventListener("submit", function(e){
+        e.preventDefault();
+        let username = document.getElementById("username").value;
+        let password = document.getElementById("password").value;
+
+        fetch("/jpa/user/login", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({username, password})
+        }).then(res=>res.json())
+          .then(data=>{
+            alert("登录成功");
+            location.href="/index";
         })
-    }
+    });
 </script>
 </body>
 </html>

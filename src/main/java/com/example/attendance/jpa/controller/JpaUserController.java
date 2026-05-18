@@ -1,12 +1,11 @@
 package com.example.attendance.jpa.controller;
 
+import com.example.attendance.dto.LoginRequest;
 import com.example.attendance.dto.RegisterRequest;
 import com.example.attendance.jpa.entity.User;
 import com.example.attendance.jpa.service.JpaUserService;
-import com.example.attendance.dto.LoginRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 import java.util.List;
 /**
@@ -80,21 +79,11 @@ public class JpaUserController {
         return ResponseEntity.ok(jpaUserService.login(loginRequest));
     }
 
-    @GetMapping("/toLogin/")
-    public String toLogin(){
-        return "login";
-    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest){
         return ResponseEntity.ok(jpaUserService.register(registerRequest));
     }
-    @GetMapping("/toRegister/")
-    public String toRegister(){
-        return "register";
-    }
-    @GetMapping("/index/")
-    public String toIndex(){
-        return "index";
-    }
+
+
 }

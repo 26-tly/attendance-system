@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>系统首页</title>
+    <title>考勤管理系统</title>
     <style>
         body {
             font-family: "Microsoft YaHei", sans-serif;
@@ -32,14 +32,13 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>考勤管理系统</h1>
-        <a th:href="@{/logout}" class="logout-btn">退出登录</a>
-    </div>
-    <div class="content">
-        <h2>欢迎来到系统首页！</h2>
-        <p>你已成功登录，可以使用系统功能。</p>
-    </div>
-
+<div class="header">
+    <h1>考勤管理系统</h1>
+    <a th:href="@{/logout}" class="logout-btn">退出登录</a>
+</div>
+<div class="content">
+    <h2>欢迎来到系统首页！</h2>
+    <p>你已成功登录，可以使用系统功能。</p>
+</div>
 </body>
 </html>
