@@ -1,15 +1,19 @@
 package com.example.attendance.jpa.service.impl;
+
 import com.example.attendance.jpa.entity.Attendance;
+import com.example.attendance.jpa.entity.Course;
 import com.example.attendance.jpa.repository.AttendanceRepository;
+import com.example.attendance.jpa.repository.CourseRepository;
 import com.example.attendance.jpa.service.JpaAttendanceService;
-import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.domain.Sort;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,10 +22,11 @@ import java.util.Optional;
  */
 @Service
 @Transactional(readOnly = true) // 只读事务，提升查询性能
+
 public class JpaAttendanceServiceImpl implements JpaAttendanceService {
     // 注入Repository
     private final AttendanceRepository attendanceRepository;
-
+    private final CourseRepository  courseRepository;
     // ====================== 单一条件查询 ======================
     @Override
     public List<Attendance> findByUserId(Integer userId) {
@@ -100,8 +105,9 @@ public class JpaAttendanceServiceImpl implements JpaAttendanceService {
 
 
     // 构造器注入（Spring推荐方式）
-    public JpaAttendanceServiceImpl(AttendanceRepository attendanceRepository) {
+    public JpaAttendanceServiceImpl(AttendanceRepository attendanceRepository, CourseRepository courseRepository) {
         this.attendanceRepository = attendanceRepository;
+        this.courseRepository = courseRepository;
     }
 
     // 封装排序
@@ -146,5 +152,92 @@ public class JpaAttendanceServiceImpl implements JpaAttendanceService {
         return attendanceRepository.findAttendanceWithConditions(
                 courseId, userId, status, startDate, endDate, pageable
         );
+    }
+
+
+    /**
+     * 签到
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String checkIn(Integer userId, Integer courseId) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+
+        // 1. 查询课程
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("课程不存在"));
+
+        // 2. 查询今天是否已签到 → 这里改成 List
+        List<Attendance> existList = attendanceRepository
+                .findByUserIdAndCourseIdAndAttendanceDate(userId, courseId, today);
+
+        if (!existList.isEmpty()) {
+            return "今日已签到，请勿重复操作";
+        }
+
+        // 3. 判断是否迟到
+        String status;
+        if (now.isAfter(course.getStartTime())) {
+            status = "late";
+        } else {
+            status = "present";
+        }
+
+        // 4. 构建考勤记录
+        Attendance attendance = Attendance.builder()
+                .userId(userId)
+                .courseId(courseId)
+                .attendanceDate(today)
+                .status(status)
+                .checkinTime(now)
+                .build();
+
+        attendanceRepository.save(attendance);
+        return "签到成功，状态：" + status;
+    }
+
+    /**
+     * 签退
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String checkOut(Integer userId, Integer courseId) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+
+        // 1. 查询今日签到记录 → 改成 List
+        List<Attendance> attendanceList = attendanceRepository
+                .findByUserIdAndCourseIdAndAttendanceDate(userId, courseId, today);
+
+        if (attendanceList.isEmpty()) {
+            return "未找到签到记录，无法签退";
+        }
+
+        // 获取第一条
+        Attendance attendance = attendanceList.get(0);
+
+        // 2. 查询课程
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("课程不存在"));
+
+        // 3. 判断早退
+        if (now.isBefore(course.getEndTime())) {
+            attendance.setStatus("early");
+        }
+
+        // 4. 保存签退时间
+        attendance.setCheckoutTime(now);
+        attendanceRepository.save(attendance);
+
+        return "签退成功";
+    }
+
+    /**
+     * 查询个人考勤
+     */
+    @Override
+    public Page<Attendance> getMyAttendance(Integer userId, Pageable pageable) {
+        return attendanceRepository.findByUserId(userId, pageable);
     }
 }

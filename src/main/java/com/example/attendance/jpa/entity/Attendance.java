@@ -1,10 +1,14 @@
 package com.example.attendance.jpa.entity;
+
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import jakarta.persistence.*;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 /**
  * 考勤实体类 - 严格匹配数据库表
  */
@@ -34,4 +38,10 @@ public class Attendance {
 
     @Column(name = "seat_location", length = 20)
     private String seatLocation;
+
+    @Column(name = "checkin_time")
+    private LocalDateTime checkinTime;
+
+    @Column(name = "checkout_time")
+    private LocalDateTime checkoutTime;
 }

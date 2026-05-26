@@ -1,10 +1,17 @@
 package com.example.attendance.jpa.controller;
+
 import com.example.attendance.jpa.entity.Attendance;
+import com.example.attendance.jpa.entity.Course;
+import com.example.attendance.jpa.repository.CourseRepository;
 import com.example.attendance.jpa.service.JpaAttendanceService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Page;
+
 import java.time.LocalDate;
 import java.util.List;
 /**
@@ -15,6 +22,7 @@ import java.util.List;
 @RequestMapping("/api/attendance")
 public class JpaAttendanceController {
     private final JpaAttendanceService jpaAttendanceService;
+    private final CourseRepository courseRepository;
     // ====================== 单一条件查询接口 ======================
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Attendance>> findByUserId(@PathVariable Integer userId) {
@@ -111,8 +119,9 @@ public class JpaAttendanceController {
 
 
     // 这里注入的是接口，不是实现类
-    public JpaAttendanceController(JpaAttendanceService jpaAttendanceService) {
+    public JpaAttendanceController(JpaAttendanceService jpaAttendanceService, CourseRepository courseRepository) {
         this.jpaAttendanceService = jpaAttendanceService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -173,5 +182,56 @@ public class JpaAttendanceController {
         return jpaAttendanceService.listAttendanceWithConditions(
                 courseId, userId, status, startDate, endDate, pageNum, pageSize, sortField, sortDir
         );
+    }
+
+    /**
+     * 打卡页面
+     */
+    @GetMapping("/attendance/checkin")
+    public String checkInPage(Model model) {
+        List<Course> courseList = courseRepository.findAll();
+        model.addAttribute("courses", courseList);
+        return "attendance/checkin"; // templates/attendance/checkin.html
+    }
+
+    /**
+     * 考勤记录列表页面
+     */
+    @GetMapping("/attendance/list")
+    public String attendanceList(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+
+        // 实际项目中 userId 从登录用户获取
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<Attendance> records = jpaAttendanceService.getMyAttendance(1, pageable);
+
+        model.addAttribute("records", records);
+        return "attendance/list"; // templates/attendance/list.html
+    }
+
+    // ===================== 接口 =====================
+
+    /**
+     * 签到接口
+     */
+    @PostMapping("/attendance/doCheckIn")
+    @ResponseBody
+    public String doCheckIn(
+            @RequestParam Integer userId,
+            @RequestParam Integer courseId) {
+        return jpaAttendanceService.checkIn(userId, courseId);
+    }
+
+    /**
+     * 签退接口
+     */
+    @PostMapping("/attendance/doCheckOut")
+    @ResponseBody
+    public String doCheckOut(
+            @RequestParam Integer userId,
+            @RequestParam Integer courseId) {
+        return jpaAttendanceService.checkOut(userId, courseId);
     }
 }
