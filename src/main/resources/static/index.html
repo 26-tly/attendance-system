@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Excel考勤上传</title>
+    <input type="file" id="file">
+    <button onclick="upload()">上传并解析</button>
+    <pre id="res"></pre>
+</head>
+<body>
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/1.6.0/axios.min.js"></script>
+<script>
+    async function upload() {
+        const file = document.getElementById('file').files[0]
+        if (!file) return alert('请选择文件')
+
+        const fd = new FormData()
+        fd.append('file', file)
+
+        try {
+            const { data } = await axios.post('/excel/upload', fd)
+            document.getElementById('res').innerText = JSON.stringify(data, null, 2)
+        } catch (e) {
+            alert('上传失败')
+        }
+    }
+</script>
+</body>
+</html>
