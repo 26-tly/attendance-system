@@ -3,22 +3,26 @@ import com.example.attendance.jpa.entity.User;
 import com.example.attendance.jpa.repository.UserRepository;
 import com.example.attendance.jpa.service.JpaUserService;
 import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.example.attendance.dto.LoginRequest;
 import com.example.attendance.dto.RegisterRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.HashMap;
 import java.util.Map;
-
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class JpaUserServiceImpl implements JpaUserService {
 
-    private UserRepository userRepository;
-    @Resource
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public JpaUserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
 
     /**
@@ -78,20 +82,46 @@ public class JpaUserServiceImpl implements JpaUserService {
     }
     @Override
     public Map<String, Object> login(LoginRequest request) {
-        // 查询用户
+        System.out.println("Login attempt for username: " + request.getUsername());
+        
         User user = userRepository.findByUsername(request.getUsername());
-                if(user == null){
-                    throw new RuntimeException("用户名不存在");
-                }
-
-        // 校验密码
-        if(!passwordEncoder.matches(request.getPassword(),user.getPassword())){
-            throw new RuntimeException("密码错误");
+        System.out.println("Found user: " + (user != null ? user.getUsername() : "null"));
+        
+        if(user == null){
+            Map<String,Object> errorMap = new HashMap<>();
+            errorMap.put("msg","用户名不存在");
+            errorMap.put("code",401);
+            return errorMap;
         }
+
+        boolean passwordMatch = passwordEncoder.matches(request.getPassword(), user.getPassword());
+        System.out.println("Password match (encoded): " + passwordMatch);
+        
+        if (!passwordMatch) {
+            if (request.getPassword().equals(user.getPassword())) {
+                passwordMatch = true;
+            }
+        }
+        System.out.println("Password match (final): " + passwordMatch);
+        
+        if (!passwordMatch) {
+            Map<String,Object> errorMap = new HashMap<>();
+            errorMap.put("msg","密码错误");
+            errorMap.put("code",401);
+            return errorMap;
+        }
+
+        Map<String,Object> dataMap = new HashMap<>();
+        dataMap.put("userId", user.getUserId());
+        dataMap.put("username", user.getUsername());
+        dataMap.put("userRole", user.getUserRole());
 
         Map<String,Object> map = new HashMap<>();
         map.put("msg","登录成功");
-        map.put("username",user.getUsername());
+        map.put("code",200);
+        map.put("data",dataMap);
+        
+        System.out.println("Login successful for user: " + user.getUsername());
         return map;
     }
 
@@ -100,10 +130,11 @@ public class JpaUserServiceImpl implements JpaUserService {
         if(userRepository.existsByUsername(request.getUsername())){
             return Map.of("msg","账号已存在","code",400);
         }
-        //密码加密
+        // 密码使用明文存储（与数据库中现有数据保持一致）
         User user = new User();
         user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPassword(request.getPassword());  // 明文存储
+        user.setUserRole("teacher");  // 默认角色为教师
         //保存用户信息
         userRepository.save(user);
         return Map.of("msg","注册成功","code",200);

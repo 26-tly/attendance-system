@@ -1,19 +1,49 @@
 package com.example.attendance.entity;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-/**
- * 用户实体类（Lombok 简化版，完全对应数据库 user 表，不含 create_time）
- */
-@Data // 自动生成 Getter/Setter、toString、equals、hashCode
-
-@NoArgsConstructor // 自动生成无参构造
-@AllArgsConstructor // 自动生成全参构造
 public class User {
+    private Integer userId;
+    private String username;
+    private String password;
+    private String userRole;
 
-        private Integer userId;
-        private String username;
-        private String password;
-        private String userRole;
+    public User() {}
+
+    public User(Integer userId, String username, String password, String userRole) {
+        this.userId = userId;
+        this.username = username;
+        this.password = password;
+        this.userRole = userRole;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getUserRole() {
+        return userRole;
+    }
+
+    public void setUserRole(String userRole) {
+        this.userRole = userRole;
+    }
 }

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>我的请假 - 学生端</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #8b9fe8;
+            --primary-light: #b8c5f0;
+            --warning-color: #f5d78e;
+            --warning-light: #fef3c7;
+            --error-color: #f0a0a0;
+            --error-light: #fce4e4;
+            --success-color: #7ed6a8;
+            --success-light: #a8e6c3;
+            --bg-color: #f8f9fc;
+            --card-bg: #ffffff;
+            --text-primary: #4a5568;
+            --text-secondary: #8896a8;
+            --text-light: #b8c5d4;
+            --shadow-light: 0 2px 8px rgba(139, 159, 232, 0.1);
+            --radius-medium: 16px;
+            --tab-height: 70px;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        html, body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .main-content {
+            padding: 16px;
+            padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 16px);
+            min-height: 100vh;
+            max-width: 428px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            background: var(--card-bg);
+            border-radius: var(--radius-medium);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 4px 0;
+        }
+
+        .page-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .leave-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-medium);
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .leave-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .leave-course {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .leave-status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: var(--warning-light);
+            color: #b8860b;
+        }
+
+        .status-approved {
+            background: var(--success-light);
+            color: #2d8a5a;
+        }
+
+        .status-rejected {
+            background: var(--error-light);
+            color: #c0392b;
+        }
+
+        .leave-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .leave-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .leave-label {
+            color: var(--text-secondary);
+        }
+
+        .leave-value {
+            color: var(--text-primary);
+            text-align: right;
+        }
+
+        .leave-reason {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e8ecf2;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            color: var(--text-light);
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        /* 底部标签栏 */
+        .bottom-tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+            padding-bottom: var(--safe-bottom);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-around;
+            padding-top: 10px;
+            padding-bottom: calc(10px + var(--safe-bottom));
+        }
+
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+            min-width: 60px;
+        }
+
+        .tab-item:active {
+            transform: scale(0.95);
+        }
+
+        .tab-icon {
+            font-size: 22px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            transition: all 0.25s ease;
+        }
+
+        .tab-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            transition: all 0.25s ease;
+            font-weight: 500;
+        }
+
+        .tab-item.active .tab-icon,
+        .tab-item.active .tab-label {
+            color: var(--primary-color);
+        }
+
+        .tab-item.active .tab-icon {
+            transform: scale(1.1);
+        }
+
+        .tab-item.active {
+            position: relative;
+        }
+
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            width: 20px;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .tab-center {
+            flex: 1;
+        }
+
+        .tab-center .tab-icon-wrapper {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">我的请假</h1>
+            <p class="page-subtitle" id="currentUser">加载中...</p>
+        </div>
+
+        <div id="loadingMessage" class="loading">
+            <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
+            <p style="margin-top: 12px;">加载中...</p>
+        </div>
+
+        <div id="emptyMessage" class="empty-state" style="display: none;">
+            <div class="empty-icon"><i class="fas fa-calendar-times"></i></div>
+            <p>暂无请假记录</p>
+            <p style="font-size: 13px; margin-top: 8px;">点击下方"请假"按钮提交请假申请</p>
+        </div>
+
+        <div id="leaveList"></div>
+    </div>
+
+    <!-- 底部标签栏 -->
+    <nav class="bottom-tab-bar">
+        <a href="/student_index" class="tab-item">
+            <span class="tab-icon"><i class="fas fa-home"></i></span>
+            <span class="tab-label">首页</span>
+        </a>
+        <a href="/student_checkin" class="tab-item tab-center">
+            <span class="tab-icon"><i class="fas fa-clipboard-check"></i></span>
+            <span class="tab-label">打卡</span>
+        </a>
+        <a href="/student_leave_apply" class="tab-item">
+            <span class="tab-icon"><i class="fas fa-file-alt"></i></span>
+            <span class="tab-label">请假</span>
+        </a>
+        <a href="/student_attendance" class="tab-item active">
+            <span class="tab-icon"><i class="fas fa-user"></i></span>
+            <span class="tab-label">我的</span>
+        </a>
+    </nav>
+
+    <script>
+        let currentUser = null;
+
+        function initUser() {
+            const userDataStr = localStorage.getItem('currentUser');
+            if (!userDataStr) {
+                location.href = '/login';
+                return false;
+            }
+
+            try {
+                currentUser = JSON.parse(userDataStr);
+                const authToken = currentUser.token || '';
+
+                function authFetch(url, options = {}) {
+                    options.headers = options.headers || {};
+                    if (authToken) {
+                        options.headers['Authorization'] = 'Bearer ' + authToken;
+                    }
+                    return fetch(url, options);
+                }
+
+                if (!currentUser.userId || !currentUser.username) {
+                    alert('用户信息不完整，请重新登录');
+                    localStorage.removeItem('currentUser');
+                    location.href = '/login';
+                    return false;
+                }
+
+                if (currentUser.role && currentUser.role !== 'student' && currentUser.role !== 'STUDENT') {
+                    alert('当前用户不是学生，无法访问学生端');
+                    localStorage.removeItem('currentUser');
+                    location.href = '/login';
+                    return false;
+                }
+
+                document.getElementById('currentUser').textContent = '欢迎, ' + currentUser.username;
+                return true;
+            } catch (e) {
+                console.error('解析用户数据失败:', e);
+                localStorage.removeItem('currentUser');
+                location.href = '/login';
+                return false;
+            }
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待审批',
+                'approved': '已批准',
+                'rejected': '已拒绝',
+                'PENDING': '待审批',
+                'APPROVED': '已批准',
+                'REJECTED': '已拒绝'
+            };
+            return statusMap[status] || status || '未知';
+        }
+
+        function getStatusClass(status) {
+            if (status === 'pending' || status === 'PENDING') return 'status-pending';
+            if (status === 'approved' || status === 'APPROVED') return 'status-approved';
+            if (status === 'rejected' || status === 'REJECTED') return 'status-rejected';
+            return 'status-pending';
+        }
+
+        function getLeaveTypeText(type) {
+            const typeMap = {
+                'sick': '病假',
+                'personal': '事假',
+                'business': '公假'
+            };
+            return typeMap[type] || type || '未知';
+        }
+
+        function loadLeaveRecords() {
+            const userId = currentUser.userId || currentUser.id;
+            
+            authFetch(`/api/leave/user/${userId}`)
+                .then(r => r.json())
+                .then(result => {
+                    document.getElementById('loadingMessage').style.display = 'none';
+                    
+                    if (result.code === 200 && result.data && result.data.length > 0) {
+                        const records = result.data;
+                        let html = '';
+                        
+                        records.forEach(record => {
+                            html += `
+                                <div class="leave-card">
+                                    <div class="leave-header">
+                                        <span class="leave-course">${record.courseName || '课程'}</span>
+                                        <span class="leave-status ${getStatusClass(record.status)}">${getStatusText(record.status)}</span>
+                                    </div>
+                                    <div class="leave-detail">
+                                        <div class="leave-row">
+                                            <span class="leave-label">请假类型</span>
+                                            <span class="leave-value">${getLeaveTypeText(record.leaveType)}</span>
+                                        </div>
+                                        <div class="leave-row">
+                                            <span class="leave-label">开始日期</span>
+                                            <span class="leave-value">${record.startDate || '-'}</span>
+                                        </div>
+                                        <div class="leave-row">
+                                            <span class="leave-label">结束日期</span>
+                                            <span class="leave-value">${record.endDate || '-'}</span>
+                                        </div>
+                                        <div class="leave-reason">
+                                            <strong>请假原因：</strong>${record.reason || '无'}
+                                        </div>
+                                        ${record.reply ? `
+                                        <div class="leave-reason" style="color: #2d8a5a;">
+                                            <strong>审批意见：</strong>${record.reply}
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        document.getElementById('leaveList').innerHTML = html;
+                    } else {
+                        document.getElementById('emptyMessage').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('加载请假记录失败:', error);
+                    document.getElementById('loadingMessage').style.display = 'none';
+                    document.getElementById('emptyMessage').style.display = 'block';
+                    document.getElementById('emptyMessage').querySelector('p').textContent = '加载失败，请稍后重试';
+                });
+        }
+
+        // 初始化
+        if (initUser()) {
+            loadLeaveRecords();
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.example.attendance.jpa.service.impl;
 
+import com.example.attendance.common.Result;
 import com.example.attendance.jpa.entity.Attendance;
 import com.example.attendance.jpa.entity.Course;
 import com.example.attendance.jpa.repository.AttendanceRepository;
@@ -98,6 +99,7 @@ public class JpaAttendanceServiceImpl implements JpaAttendanceService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteById(Integer id) {
         attendanceRepository.deleteById(id);
     }
@@ -160,41 +162,50 @@ public class JpaAttendanceServiceImpl implements JpaAttendanceService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String checkIn(Integer userId, Integer courseId) {
+    public Result<Attendance> checkIn(Integer userId, Integer courseId) {
         LocalDate today = LocalDate.now();
         LocalDateTime now = LocalDateTime.now();
 
-        // 1. 查询课程
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("课程不存在"));
+        try {
+            if (userId == null || userId <= 0) {
+                return Result.error("用户ID无效");
+            }
+            if (courseId == null || courseId <= 0) {
+                return Result.error("课程ID无效");
+            }
 
-        // 2. 查询今天是否已签到 → 这里改成 List
-        List<Attendance> existList = attendanceRepository
-                .findByUserIdAndCourseIdAndAttendanceDate(userId, courseId, today);
+            Course course = courseRepository.findById(courseId)
+                    .orElse(null);
+            if (course == null) {
+                return Result.error("课程不存在");
+            }
 
-        if (!existList.isEmpty()) {
-            return "今日已签到，请勿重复操作";
+            List<Attendance> existList = attendanceRepository
+                    .findByUserIdAndCourseIdAndAttendanceDate(userId, courseId, today);
+
+            if (!existList.isEmpty()) {
+                return Result.error("今日已签到，请勿重复操作");
+            }
+
+            String status = "present";
+            LocalDateTime startTime = course.getStartTime();
+            if (startTime != null && now.isAfter(startTime)) {
+                status = "late";
+            }
+
+            Attendance attendance = Attendance.builder()
+                    .userId(userId)
+                    .courseId(courseId)
+                    .attendanceDate(today)
+                    .status(status)
+                    .checkinTime(now)
+                    .build();
+
+            Attendance saved = attendanceRepository.save(attendance);
+            return Result.success(saved);
+        } catch (Exception e) {
+            return Result.error("签到失败：" + e.getMessage());
         }
-
-        // 3. 判断是否迟到
-        String status;
-        if (now.isAfter(course.getStartTime())) {
-            status = "late";
-        } else {
-            status = "present";
-        }
-
-        // 4. 构建考勤记录
-        Attendance attendance = Attendance.builder()
-                .userId(userId)
-                .courseId(courseId)
-                .attendanceDate(today)
-                .status(status)
-                .checkinTime(now)
-                .build();
-
-        attendanceRepository.save(attendance);
-        return "签到成功，状态：" + status;
     }
 
     /**
@@ -202,35 +213,42 @@ public class JpaAttendanceServiceImpl implements JpaAttendanceService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String checkOut(Integer userId, Integer courseId) {
+    public Result<Void> checkOut(Integer userId, Integer courseId) {
         LocalDate today = LocalDate.now();
         LocalDateTime now = LocalDateTime.now();
 
-        // 1. 查询今日签到记录 → 改成 List
-        List<Attendance> attendanceList = attendanceRepository
-                .findByUserIdAndCourseIdAndAttendanceDate(userId, courseId, today);
+        try {
+            // 1. 查询今日签到记录
+            List<Attendance> attendanceList = attendanceRepository
+                    .findByUserIdAndCourseIdAndAttendanceDate(userId, courseId, today);
 
-        if (attendanceList.isEmpty()) {
-            return "未找到签到记录，无法签退";
+            if (attendanceList.isEmpty()) {
+                return Result.error("未找到签到记录，无法签退");
+            }
+
+            // 获取第一条
+            Attendance attendance = attendanceList.get(0);
+
+            // 2. 查询课程
+            Course course = courseRepository.findById(courseId)
+                    .orElse(null);
+            if (course == null) {
+                return Result.error("课程不存在");
+            }
+
+            // 3. 判断早退
+            if (now.isBefore(course.getEndTime())) {
+                attendance.setStatus("early");
+            }
+
+            // 4. 保存签退时间
+            attendance.setCheckoutTime(now);
+            attendanceRepository.save(attendance);
+
+            return Result.success();
+        } catch (Exception e) {
+            return Result.error("签退失败：" + e.getMessage());
         }
-
-        // 获取第一条
-        Attendance attendance = attendanceList.get(0);
-
-        // 2. 查询课程
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("课程不存在"));
-
-        // 3. 判断早退
-        if (now.isBefore(course.getEndTime())) {
-            attendance.setStatus("early");
-        }
-
-        // 4. 保存签退时间
-        attendance.setCheckoutTime(now);
-        attendanceRepository.save(attendance);
-
-        return "签退成功";
     }
 
     /**

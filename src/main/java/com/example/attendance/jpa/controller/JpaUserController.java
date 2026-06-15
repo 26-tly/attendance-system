@@ -4,10 +4,12 @@ import com.example.attendance.dto.LoginRequest;
 import com.example.attendance.dto.RegisterRequest;
 import com.example.attendance.jpa.entity.User;
 import com.example.attendance.jpa.service.JpaUserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 /**
  * JPA版用户控制器，和老JDBC接口功能完全对齐
  */
@@ -15,6 +17,7 @@ import java.util.List;
 @RequestMapping("/jpa/user") // 接口前缀，和老接口区分开
 public class JpaUserController {
     // 注入JPA的Service
+    @Autowired
     private JpaUserService jpaUserService;
 
     /**
@@ -81,8 +84,11 @@ public class JpaUserController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest){
-        return ResponseEntity.ok(jpaUserService.register(registerRequest));
+    public Map<String, Object> register(@RequestBody RegisterRequest registerRequest){
+        System.out.println("Register method called with username: " + registerRequest.getUsername());
+        Map<String,Object> result = jpaUserService.register(registerRequest);
+        System.out.println("Register result: " + result);
+        return result;
     }
 
 

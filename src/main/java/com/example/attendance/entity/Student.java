@@ -4,6 +4,7 @@ package com.example.attendance.entity;
 
 public class Student {
 
+    private Long id;
     private  String studentId;
     private String name;
     private String classname;
@@ -16,6 +17,14 @@ public class Student {
 
     public Student() {
 
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getStudentId() {

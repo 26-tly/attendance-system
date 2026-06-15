@@ -1,5 +1,6 @@
 package com.example.attendance.jpa.service;
 
+import com.example.attendance.common.Result;
 import com.example.attendance.jpa.entity.Attendance;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -84,11 +85,12 @@ public interface JpaAttendanceService {
             String sortField,
             String sortDir
     );
+
     // 签到
-    String checkIn(Integer userId, Integer courseId);
+    Result<Attendance> checkIn(Integer userId, Integer courseId);
 
     // 签退
-    String checkOut(Integer userId, Integer courseId);
+    Result<Void> checkOut(Integer userId, Integer courseId);
 
     // 查询个人考勤记录
     Page<Attendance> getMyAttendance(Integer userId, Pageable pageable);

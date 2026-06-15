@@ -2,15 +2,18 @@ package com.example.attendance.dao;
 
 import com.example.attendance.entity.Student;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Repository
 
 public class StudentDao {
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     public void insert(Student student) {
 
     }
@@ -18,6 +21,10 @@ public class StudentDao {
 
         return null;
 
+    }
+
+    public List<Student> findAll() {
+        return new ArrayList<>();
     }
 
 }

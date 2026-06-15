@@ -1,5 +1,6 @@
 package com.example.attendance.jpa.controller;
 
+import com.example.attendance.common.Result;
 import com.example.attendance.jpa.entity.Attendance;
 import com.example.attendance.jpa.entity.Course;
 import com.example.attendance.jpa.repository.CourseRepository;
@@ -12,8 +13,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 /**
  * 考勤模块控制层
  * 处理前端请求，调用JPA业务层，返回响应
@@ -25,7 +28,17 @@ public class JpaAttendanceController {
     private final CourseRepository courseRepository;
     // ====================== 单一条件查询接口 ======================
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Attendance>> findByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<?> findByUserId(@PathVariable Integer userId, HttpServletRequest httpRequest) {
+        // 权限验证：学生只能查询自己的考勤记录
+        Long currentUserId = (Long) httpRequest.getAttribute("userId");
+        String currentRole = (String) httpRequest.getAttribute("role");
+        
+        if (!"teacher".equalsIgnoreCase(currentRole) && !"admin".equalsIgnoreCase(currentRole)) {
+            if (currentUserId == null || !currentUserId.equals(userId.longValue())) {
+                return ResponseEntity.ok(Result.error("权限不足：只能查询自己的考勤记录"));
+            }
+        }
+        
         List<Attendance> list = jpaAttendanceService.findByUserId(userId);
         return ResponseEntity.ok(list);
     }
@@ -111,9 +124,18 @@ public class JpaAttendanceController {
         return ResponseEntity.ok(list);
     }
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
-        jpaAttendanceService.deleteById(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deleteById(@PathVariable Integer id) {
+        try {
+            // 检查记录是否存在
+            Attendance attendance = jpaAttendanceService.findById(id);
+            if (attendance == null) {
+                return ResponseEntity.notFound().build();
+            }
+            jpaAttendanceService.deleteById(id);
+            return ResponseEntity.ok().body("删除成功");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("删除失败: " + e.getMessage());
+        }
     }
 
 
@@ -211,27 +233,53 @@ public class JpaAttendanceController {
         return "attendance/list"; // templates/attendance/list.html
     }
 
-    // ===================== 接口 =====================
+    // ===================== 签到签退接口 =====================
 
     /**
      * 签到接口
      */
-    @PostMapping("/attendance/doCheckIn")
-    @ResponseBody
-    public String doCheckIn(
-            @RequestParam Integer userId,
-            @RequestParam Integer courseId) {
-        return jpaAttendanceService.checkIn(userId, courseId);
+    @PostMapping("/checkin")
+    public ResponseEntity<?> doCheckIn(@RequestBody Map<String, Integer> request, HttpServletRequest httpRequest) {
+        Integer userId = request.get("userId");
+        Integer courseId = request.get("courseId");
+        if (userId == null || courseId == null) {
+            return ResponseEntity.badRequest().body(Result.error("用户ID和课程ID不能为空"));
+        }
+        
+        // 身份验证：学生只能为自己签到
+        Long currentUserId = (Long) httpRequest.getAttribute("userId");
+        String currentRole = (String) httpRequest.getAttribute("role");
+        
+        if (!"teacher".equalsIgnoreCase(currentRole) && !"admin".equalsIgnoreCase(currentRole)) {
+            if (currentUserId == null || !currentUserId.equals(userId.longValue())) {
+                return ResponseEntity.ok(Result.error("权限不足：只能为自己签到"));
+            }
+        }
+        
+        return ResponseEntity.ok(jpaAttendanceService.checkIn(userId, courseId));
     }
 
     /**
      * 签退接口
      */
-    @PostMapping("/attendance/doCheckOut")
-    @ResponseBody
-    public String doCheckOut(
-            @RequestParam Integer userId,
-            @RequestParam Integer courseId) {
-        return jpaAttendanceService.checkOut(userId, courseId);
+    @PostMapping("/checkout")
+    public ResponseEntity<?> doCheckOut(@RequestBody Map<String, Integer> request, HttpServletRequest httpRequest) {
+        Integer userId = request.get("userId");
+        Integer courseId = request.get("courseId");
+        if (userId == null || courseId == null) {
+            return ResponseEntity.badRequest().body(Result.error("用户ID和课程ID不能为空"));
+        }
+        
+        // 身份验证：学生只能为自己签退
+        Long currentUserId = (Long) httpRequest.getAttribute("userId");
+        String currentRole = (String) httpRequest.getAttribute("role");
+        
+        if (!"teacher".equalsIgnoreCase(currentRole) && !"admin".equalsIgnoreCase(currentRole)) {
+            if (currentUserId == null || !currentUserId.equals(userId.longValue())) {
+                return ResponseEntity.ok(Result.error("权限不足：只能为自己签退"));
+            }
+        }
+        
+        return ResponseEntity.ok(jpaAttendanceService.checkOut(userId, courseId));
     }
 }

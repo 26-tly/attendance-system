@@ -12,5 +12,7 @@ public interface StudentRepository extends JpaRepository<Student,Long> {
     Page<Student> findByStudentNoContainingOrNameContaining(String studentNo, String name, Pageable pageable);
     // 批量删除
     void deleteAllByIdIn(List<Long> ids);
+    // 根据学号查找学生
+    List<Student> findByStudentNo(String studentNo);
 }
 

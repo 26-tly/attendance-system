@@ -1,5 +1,8 @@
 package com.example.attendance.common;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Result <T>{
     private Integer code;
     private String msg;
@@ -20,6 +23,34 @@ public class Result <T>{
     }
     public static <T> Result<T> error(String msg){
         return new Result<>(500,msg,null);
+    }
+
+    public static <T> Result<T> error(String msg, T data){
+        return new Result<>(500,msg,data);
+    }
+
+    public Integer getCode() {
+        return code;
+    }
+
+    public void setCode(Integer code) {
+        this.code = code;
+    }
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
     }
 
 }

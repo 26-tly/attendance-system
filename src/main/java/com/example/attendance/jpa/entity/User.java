@@ -1,28 +1,16 @@
 package com.example.attendance.jpa.entity;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import jakarta.persistence.*;
-@Data // 自动生成 Getter/Setter、toString、equals、hashCode
 
-@NoArgsConstructor // 自动生成无参构造
-@AllArgsConstructor // 自动生成全参构造
+import jakarta.persistence.*;
+
 @Entity
-@Table(name="user")
+@Table(name="[user]")
 public class User {
-    /**
-     * 主键：用户id
-     * 自增策略，和数据库表结构保持一致
-     */
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
-
     @Column(name="user_id")
     private Integer userId;
 
-
-
-    @Column(name="username",nullable = false,unique = true,length = 50)
+    @Column(name="username",nullable = false,unique = true,length = 50)        
     private String username;
 
     @Column(name="password",nullable = false,length = 100)
@@ -30,4 +18,45 @@ public class User {
 
     @Column(name="user_role",length = 20)
     private String userRole;
+
+    public User() {}
+
+    public User(Integer userId, String username, String password, String userRole) {
+        this.userId = userId;
+        this.username = username;
+        this.password = password;
+        this.userRole = userRole;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getUserRole() {
+        return userRole;
+    }
+
+    public void setUserRole(String userRole) {
+        this.userRole = userRole;
+    }
 }

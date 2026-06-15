@@ -27,28 +27,35 @@ public class SecurityConfig {
         http
                 // 1. 配置跨域
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // 2. 放行所有请求
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                // 3. 关闭CSRF（必须，否则POST/OPTIONS请求会被拦截）
+                // 2. 配置请求授权规则
+                .authorizeHttpRequests(auth -> auth
+                        // 公开接口 - 无需登录即可访问
+                        .requestMatchers("/login", "/register", "/user/login", "/user/register").permitAll()
+                        // API公开接口
+                        .requestMatchers("/api/auth/**", "/api/login", "/api/register").permitAll()
+                        // 静态资源和Swagger文档
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
+                        // 模板页面
+                        .requestMatchers("/", "/index.html").permitAll()
+                        // 其他所有请求需要认证（由AuthInterceptor处理）
+                        .anyRequest().permitAll()
+                )
+                // 3. 关闭CSRF（使用JWT认证，无需CSRF）
                 .csrf(csrf -> csrf.disable())
-                // 4. 关闭Session（避免浏览器预检请求被Session拦截）
+                // 4. 无状态Session管理（JWT认证）
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
     }
 
-    // 全局跨域配置，允许所有来源、所有方法、所有头信息
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 允许所有来源（包括你IDE的63342端口）
-        configuration.setAllowedOrigins(Arrays.asList("*"));
-        // 允许所有HTTP方法（GET/POST/PUT/DELETE/OPTIONS）
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080", "http://127.0.0.1:8080"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        // 允许所有头信息
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        // 允许预检请求缓存，减少重复请求
         configuration.setMaxAge(3600L);
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

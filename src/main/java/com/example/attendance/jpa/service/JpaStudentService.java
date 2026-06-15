@@ -4,15 +4,17 @@ import com.example.attendance.common.Result;
 import com.example.attendance.jpa.entity.Student;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 public interface JpaStudentService {
     Result<Void> addStudent(Student student);
 
     Page<Student> listStudents(String keyword, Pageable pageable);
 
-    Result<Void> batchDelete(List<Long> ids);
+    Result<Map<String, Object>> batchDelete(List<Long> ids);
 
     // 新增编辑、单删、根据id查询
     Student getById(Long id);
@@ -20,4 +22,8 @@ public interface JpaStudentService {
     Result<Void> updateStudent(Student student);
 
     Result<Void> deleteById(Long id);
+
+    Student saveStudent(Student student);
+
+    Result<Map<String, Object>> importStudents(MultipartFile file, Integer courseId);
 }

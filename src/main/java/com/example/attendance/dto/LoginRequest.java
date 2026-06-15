@@ -1,16 +1,29 @@
 package com.example.attendance.dto;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-/*
-登录请求DTO
-专门接收前端账号密码参数
- */
-@Data
-@NoArgsConstructor // 自动生成无参构造
-@AllArgsConstructor // 自动生成全参构造
-public class LoginRequest {
 
+public class LoginRequest {
     private String username;
     private String password;
+
+    public LoginRequest() {}
+
+    public LoginRequest(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }

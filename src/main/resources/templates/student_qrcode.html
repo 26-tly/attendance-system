@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>扫码签到 - 学生端</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #8b9fe8;
+            --primary-light: #b8c5f0;
+            --success-color: #7ed6a8;
+            --success-light: #a8e6c3;
+            --warning-color: #f5d78e;
+            --warning-light: #fef3c7;
+            --error-color: #f0a0a0;
+            --error-light: #fce4e4;
+            --bg-color: #f8f9fc;
+            --card-bg: #ffffff;
+            --text-primary: #4a5568;
+            --text-secondary: #8896a8;
+            --text-light: #b8c5d4;
+            --shadow-light: 0 2px 8px rgba(139, 159, 232, 0.1);
+            --radius-medium: 16px;
+            --tab-height: 70px;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        html, body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .main-content {
+            padding: 16px;
+            padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 16px);
+            min-height: 100vh;
+            max-width: 428px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            background: var(--card-bg);
+            border-radius: var(--radius-medium);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 4px 0;
+        }
+
+        .page-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-medium);
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-light);
+            text-align: center;
+        }
+
+        .card-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e8ecf2;
+            border-radius: 12px;
+            font-size: 16px;
+            color: var(--text-primary);
+            background: var(--bg-color);
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn:active { transform: scale(0.96); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            box-shadow: 0 4px 12px rgba(139, 159, 232, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid #e8ecf2;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-group .btn { flex: 1; }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .message.success {
+            background: var(--success-light);
+            color: #2d8a5a;
+            display: block;
+        }
+
+        .message.error {
+            background: var(--error-light);
+            color: #c0392b;
+            display: block;
+        }
+
+        .tip {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 16px;
+        }
+
+        /* 状态图标颜色 */
+        .icon-input { color: var(--primary-color); }
+        .icon-loading { color: var(--warning-color); }
+        .icon-success { color: var(--success-color); }
+        .icon-error { color: var(--error-color); }
+
+        /* 底部标签栏 */
+        .bottom-tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+            padding-bottom: var(--safe-bottom);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-around;
+            padding-top: 10px;
+            padding-bottom: calc(10px + var(--safe-bottom));
+        }
+
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+            min-width: 60px;
+        }
+
+        .tab-item:active {
+            transform: scale(0.95);
+        }
+
+        .tab-icon {
+            font-size: 22px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            transition: all 0.25s ease;
+        }
+
+        .tab-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            transition: all 0.25s ease;
+            font-weight: 500;
+        }
+
+        .tab-item.active .tab-icon,
+        .tab-item.active .tab-label {
+            color: var(--primary-color);
+        }
+
+        .tab-item.active .tab-icon {
+            transform: scale(1.1);
+        }
+
+        .tab-item.active {
+            position: relative;
+        }
+
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            width: 20px;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .tab-center {
+            flex: 1;
+        }
+
+        .tab-center .tab-icon-wrapper {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">扫码签到</h1>
+            <p class="page-subtitle" id="currentUser">加载中...</p>
+        </div>
+
+        <!-- 输入签到码状态 -->
+        <div class="card" id="inputState">
+            <div class="card-icon icon-input"><i class="fas fa-qrcode"></i></div>
+            <div class="card-title">扫码签到</div>
+            <div class="card-desc">请输入教师提供的签到码</div>
+            
+            <div id="message" class="message"></div>
+            
+            <div class="form-group">
+                <input type="text" id="sessionCodeInput" class="form-control" placeholder="请输入签到码" maxlength="20">
+            </div>
+            
+            <button onclick="submitCheckin()" class="btn btn-primary">
+                <i class="fas fa-check"></i>
+                确认签到
+            </button>
+            
+            <p class="tip">提示：签到码由教师在课堂上展示</p>
+        </div>
+
+        <!-- 加载中状态 -->
+        <div class="card" id="loadingState" style="display: none;">
+            <div class="card-icon icon-loading"><i class="fas fa-spinner fa-spin"></i></div>
+            <div class="card-title">正在验证签到信息...</div>
+            <div class="card-desc">请稍候，系统正在处理您的签到请求</div>
+        </div>
+
+        <!-- 成功状态 -->
+        <div class="card" id="successState" style="display: none;">
+            <div class="card-icon icon-success"><i class="fas fa-check-circle"></i></div>
+            <div class="card-title">签到成功</div>
+            <div class="card-desc">感谢您的签到，祝您学习愉快！</div>
+            <button onclick="location.href='/student_index'" class="btn btn-primary">
+                <i class="fas fa-home"></i>
+                返回首页
+            </button>
+        </div>
+
+        <!-- 错误状态 -->
+        <div class="card" id="errorState" style="display: none;">
+            <div class="card-icon icon-error"><i class="fas fa-times-circle"></i></div>
+            <div class="card-title">签到失败</div>
+            <div class="card-desc" id="errorMessage">未知错误</div>
+            <div class="btn-group">
+                <button onclick="goBackToInput()" class="btn btn-primary">
+                    <i class="fas fa-redo"></i>
+                    重新输入
+                </button>
+                <button onclick="location.href='/student_index'" class="btn btn-outline">
+                    <i class="fas fa-home"></i>
+                    返回
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部标签栏 -->
+    <nav class="bottom-tab-bar">
+        <a href="/student_index" class="tab-item">
+            <span class="tab-icon"><i class="fas fa-home"></i></span>
+            <span class="tab-label">首页</span>
+        </a>
+        <a href="/student_checkin" class="tab-item tab-center">
+            <span class="tab-icon"><i class="fas fa-clipboard-check"></i></span>
+            <span class="tab-label">打卡</span>
+        </a>
+        <a href="/student_leave_apply" class="tab-item">
+            <span class="tab-icon"><i class="fas fa-file-alt"></i></span>
+            <span class="tab-label">请假</span>
+        </a>
+        <a href="/student_attendance" class="tab-item">
+            <span class="tab-icon"><i class="fas fa-user"></i></span>
+            <span class="tab-label">我的</span>
+        </a>
+    </nav>
+
+    <script>
+        let currentUser = null;
+
+        function initUser() {
+            const userDataStr = localStorage.getItem('currentUser');
+            if (!userDataStr) {
+                location.href = '/login';
+                return false;
+            }
+
+            try {
+                currentUser = JSON.parse(userDataStr);
+                
+                if (!currentUser.userId || !currentUser.username) {
+                    alert('用户信息不完整，请重新登录');
+                    localStorage.removeItem('currentUser');
+                    location.href = '/login';
+                    return false;
+                }
+
+                if (currentUser.role && currentUser.role !== 'student' && currentUser.role !== 'STUDENT') {
+                    alert('当前用户不是学生，无法访问学生端');
+                    localStorage.removeItem('currentUser');
+                    location.href = '/login';
+                    return false;
+                }
+
+                document.getElementById('currentUser').textContent = '欢迎, ' + currentUser.username;
+                return true;
+            } catch (e) {
+                console.error('解析用户数据失败:', e);
+                localStorage.removeItem('currentUser');
+                location.href = '/login';
+                return false;
+            }
+        }
+
+        function showState(stateId) {
+            ['inputState', 'loadingState', 'successState', 'errorState'].forEach(id => {
+                document.getElementById(id).style.display = id === stateId ? 'block' : 'none';
+            });
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'message ' + type;
+            setTimeout(() => { msg.className = 'message'; }, 3000);
+        }
+
+        function submitCheckin() {
+            const sessionCode = document.getElementById('sessionCodeInput').value.trim();
+            
+            if (!sessionCode) {
+                showMessage('请输入签到码', 'error');
+                return;
+            }
+
+            showState('loadingState');
+
+            const studentId = currentUser.studentId || currentUser.userId || currentUser.id || null;
+            
+            if (!studentId) {
+                document.getElementById('errorMessage').textContent = '无法获取学生信息，请重新登录';
+                showState('errorState');
+                return;
+            }
+
+            fetch('/api/checkin/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionCode: sessionCode,
+                    studentId: studentId,
+                    userId: studentId
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 200 && result.data) {
+                    showState('successState');
+                } else {
+                    document.getElementById('errorMessage').textContent = result.msg || result.message || '签到失败';
+                    showState('errorState');
+                }
+            })
+            .catch(error => {
+                console.error('签到失败:', error);
+                document.getElementById('errorMessage').textContent = '网络错误，请稍后重试';
+                showState('errorState');
+            });
+        }
+
+        function goBackToInput() {
+            showState('inputState');
+            document.getElementById('sessionCodeInput').value = '';
+        }
+
+        // 初始化
+        initUser();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

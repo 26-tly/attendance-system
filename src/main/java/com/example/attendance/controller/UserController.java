@@ -1,7 +1,10 @@
 package com.example.attendance.controller;
 import com.example.attendance.entity.User;
+import com.example.attendance.jpa.util.JwtUtil;
 import com.example.attendance.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
@@ -11,30 +14,56 @@ import java.util.Map;
 public class UserController {
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private JwtUtil jwtUtil;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     /**
-     * 1. 新增教师用户
+     * 1. 新增用户（仅管理员可创建教师用户）
      * POST /user/add
      * 请求体示例：{"username":"teacher01","password":"123456","userRole":"teacher"}
      */
     @PostMapping("/add")
-    public Map<String, Object> addUser(@RequestBody User user) {
+    public Map<String, Object> addUser(@RequestBody User user, HttpServletRequest request) {
         Map<String, Object> result = new HashMap<>();
         try {
-            // 强制角色为teacher（任务二要求新增教师用户）
-            user.setUserRole("teacher");
+            String currentRole = (String) request.getAttribute("role");
+            
+            // 验证权限：只有管理员可以创建教师用户
+            String targetRole = user.getUserRole();
+            if (targetRole == null || targetRole.isEmpty()) {
+                targetRole = "student"; // 默认角色为学生
+            }
+            
+            if ("teacher".equalsIgnoreCase(targetRole) || "admin".equalsIgnoreCase(targetRole)) {
+                if (!"admin".equalsIgnoreCase(currentRole)) {
+                    result.put("code", 403);
+                    result.put("msg", "权限不足：只有管理员可以创建教师或管理员账户");
+                    return result;
+                }
+            }
+            
+            user.setUserRole(targetRole);
+            
+            // 加密密码
+            if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+                user.setPassword(passwordEncoder.encode(user.getPassword()));
+            }
             int count = userService.addUser(user);
             if (count > 0) {
                 result.put("code", 200);
-                result.put("msg", "新增教师用户成功");
+                result.put("msg", "注册成功");
                 result.put("data", user);
             } else {
                 result.put("code", 500);
-                result.put("msg", "新增失败");
+                result.put("msg", "注册失败");
             }
         } catch (Exception e) {
             result.put("code", 500);
-            result.put("msg", "新增失败：" + e.getMessage());
+            result.put("msg", "注册失败：" + e.getMessage());
         }
         return result;
     }
@@ -74,10 +103,34 @@ public class UserController {
         Map<String, Object> result = new HashMap<>();
         try {
             User dbUser = userService.findByUsername(user.getUsername());
-            if (dbUser != null && dbUser.getPassword().equals(user.getPassword())) {
-                result.put("code", 200);
-                result.put("msg", "登录成功");
-                result.put("data", dbUser);
+            if (dbUser != null) {
+                boolean passwordMatch = passwordEncoder.matches(user.getPassword(), dbUser.getPassword());
+                
+                // 向后兼容：如果BCrypt验证失败，且数据库中的密码不是BCrypt格式（不以$2开头），尝试明文匹配
+                if (!passwordMatch && dbUser.getPassword() != null && !dbUser.getPassword().startsWith("$2")) {
+                    passwordMatch = user.getPassword().equals(dbUser.getPassword());
+                }
+                
+                if (passwordMatch) {
+                    String token = jwtUtil.generateToken(
+                            dbUser.getUserId().longValue(),
+                            dbUser.getUsername(),
+                            dbUser.getUserRole()
+                    );
+                    
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("token", token);
+                    data.put("userId", dbUser.getUserId());
+                    data.put("username", dbUser.getUsername());
+                    data.put("userRole", dbUser.getUserRole());
+                    
+                    result.put("code", 200);
+                    result.put("msg", "登录成功");
+                    result.put("data", data);
+                } else {
+                    result.put("code", 401);
+                    result.put("msg", "用户名或密码错误");
+                }
             } else {
                 result.put("code", 401);
                 result.put("msg", "用户名或密码错误");

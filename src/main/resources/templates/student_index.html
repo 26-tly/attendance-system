@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>考勤管理 - 学生端</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            /* 柔和配色方案 - 基于教师端但更浅更柔和 */
+            --primary-color: #8b9fe8;        /* 主色调 - 柔和紫蓝 */
+            --primary-light: #b8c5f0;        /* 主色调浅 */
+            --primary-dark: #6b7fd6;         /* 主色调深 */
+            --success-color: #7ed6a8;        /* 成功色 - 柔和绿 */
+            --success-light: #a8e6c3;        /* 成功色浅 */
+            --warning-color: #f5d78e;        /* 警告色 - 柔和黄 */
+            --warning-light: #fef3c7;        /* 警告色浅 */
+            --error-color: #f0a0a0;          /* 错误色 - 柔和红 */
+            --error-light: #fce4e4;           /* 错误色浅 */
+            --info-color: #9dd4e8;            /* 信息色 - 柔和蓝 */
+            --info-light: #d1eaf5;           /* 信息色浅 */
+            --bg-color: #f8f9fc;             /* 背景色 - 极浅灰 */
+            --card-bg: #ffffff;              /* 卡片背景 */
+            --text-primary: #4a5568;         /* 主要文字 - 柔和深灰 */
+            --text-secondary: #8896a8;       /* 次要文字 */
+            --text-light: #b8c5d4;           /* 浅色文字 */
+            --border-color: #e8ecf2;         /* 边框色 */
+            --shadow-light: 0 2px 8px rgba(139, 159, 232, 0.1);
+            --shadow-medium: 0 4px 16px rgba(139, 159, 232, 0.15);
+            --radius-small: 12px;
+            --radius-medium: 16px;
+            --radius-large: 24px;
+            --tab-height: 70px;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            padding: 16px;
+            padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 16px);
+            min-height: 100vh;
+            max-width: 428px;
+            margin: 0 auto;
+        }
+
+        /* 顶部用户信息区 */
+        .user-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            border-radius: var(--radius-large);
+            padding: 24px 20px;
+            padding-right: 110px;
+            margin-bottom: 20px;
+            color: white;
+            position: relative;
+            overflow: visible;
+        }
+
+        .user-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .user-header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+        }
+
+        .user-welcome {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .user-name {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .user-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            opacity: 0.85;
+            position: relative;
+            z-index: 1;
+        }
+
+        .user-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 快速操作区 */
+        .quick-actions {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .quick-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-medium);
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: var(--shadow-light);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-card:active {
+            transform: scale(0.96);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .quick-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .quick-card:hover::before,
+        .quick-card:focus::before {
+            opacity: 1;
+        }
+
+        .quick-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .quick-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .quick-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* 图标颜色 */
+        .icon-checkin { color: #7ed6a8; }
+        .icon-qrcode { color: #8b9fe8; }
+        .icon-leave { color: #f5d78e; }
+        .icon-record { color: #9dd4e8; }
+
+        /* 考勤状态卡片 */
+        .status-section {
+            margin-bottom: 24px;
+        }
+
+        .status-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-medium);
+            padding: 20px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .status-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-present {
+            background: var(--success-light);
+            color: #2d8a5a;
+        }
+
+        .status-absent {
+            background: var(--error-light);
+            color: #c0392b;
+        }
+
+        .status-late {
+            background: var(--warning-light);
+            color: #b8860b;
+        }
+
+        .status-info {
+            background: var(--info-light);
+            color: #2980b9;
+        }
+
+        .status-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .status-label {
+            color: var(--text-secondary);
+        }
+
+        .status-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .status-value.success { color: #2d8a5a; }
+        .status-value.warning { color: #b8860b; }
+        .status-value.error { color: #c0392b; }
+
+        /* 底部标签栏 */
+        .bottom-tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+            padding-bottom: var(--safe-bottom);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-around;
+            padding-top: 10px;
+            padding-bottom: calc(10px + var(--safe-bottom));
+        }
+
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+            min-width: 60px;
+        }
+
+        .tab-item:active {
+            transform: scale(0.95);
+        }
+
+        .tab-icon {
+            font-size: 22px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            transition: all 0.25s ease;
+        }
+
+        .tab-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            transition: all 0.25s ease;
+            font-weight: 500;
+        }
+
+        .tab-item.active .tab-icon,
+        .tab-item.active .tab-label {
+            color: var(--primary-color);
+        }
+
+        .tab-item.active .tab-icon {
+            transform: scale(1.1);
+        }
+
+        .tab-item.active {
+            position: relative;
+        }
+
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            width: 20px;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .tab-center {
+            flex: 1;
+        }
+
+        .tab-center .tab-icon-wrapper {
+            display: none;
+        }
+
+        /* 统计概览 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px 8px;
+            background: var(--bg-color);
+            border-radius: var(--radius-small);
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .logout-btn i {
+            font-size: 14px;
+        }
+
+        /* 横屏适配 */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .main-content {
+                padding-bottom: calc(50px + var(--safe-bottom));
+            }
+            
+            .user-header {
+                padding: 12px 16px;
+                margin-bottom: 12px;
+            }
+            
+            .user-name {
+                font-size: 18px;
+            }
+            
+            .quick-card {
+                padding: 12px 10px;
+            }
+            
+            .quick-icon {
+                font-size: 24px;
+            }
+        }
+
+        /* 大屏幕适配 */
+        @media (min-width: 600px) {
+            .main-content {
+                max-width: 500px;
+            }
+            
+            .quick-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <!-- 用户信息头部 -->
+        <div class="user-header">
+            <div class="user-welcome">欢迎使用</div>
+            <div class="user-name" id="currentUser">加载中...</div>
+            <div class="user-meta">
+                <div class="user-meta-item">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>学生</span>
+                </div>
+                <div class="user-meta-item">
+                    <i class="fas fa-clock"></i>
+                    <span id="currentTime"></span>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </button>
+        </div>
+
+        <!-- 快速操作区 -->
+        <div class="quick-actions">
+            <div class="section-title">快捷操作</div>
+            <div class="quick-grid">
+                <div class="quick-card" onclick="location.href='/student_checkin'">
+                    <span class="quick-icon icon-checkin"><i class="fas fa-clipboard-check"></i></span>
+                    <div class="quick-title">考勤打卡</div>
+                    <div class="quick-desc">签到/签退</div>
+                </div>
+                <div class="quick-card" onclick="location.href='/student_qrcode'">
+                    <span class="quick-icon icon-qrcode"><i class="fas fa-qrcode"></i></span>
+                    <div class="quick-title">扫码签到</div>
+                    <div class="quick-desc">输入签到码</div>
+                </div>
+                <div class="quick-card" onclick="location.href='/student_leave_apply'">
+                    <span class="quick-icon icon-leave"><i class="fas fa-file-alt"></i></span>
+                    <div class="quick-title">请假申请</div>
+                    <div class="quick-desc">提交申请</div>
+                </div>
+                <div class="quick-card" onclick="location.href='/student_leave'">
+                    <span class="quick-icon icon-record"><i class="fas fa-history"></i></span>
+                    <div class="quick-title">我的请假</div>
+                    <div class="quick-desc">查看记录</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 加载遮罩 -->
+        <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="width: 40px; height: 40px; border: 4px solid #e0e0e0; border-top-color: #8b9fe8; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <div style="margin-top: 16px; color: #8896a8; font-size: 14px;">加载中...</div>
+            <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+        </div>
+
+        <!-- 考勤状态概览 -->
+        <div class="status-section">
+            <div class="section-title">考勤概览</div>
+            <div class="status-card">
+                <div class="status-header">
+                    <span class="status-title">本周考勤</span>
+                    <span class="status-badge status-present">正常</span>
+                </div>
+                <div class="status-detail">
+                    <div class="status-row">
+                        <span class="status-label">本周出勤</span>
+                        <span class="status-value success" id="weekAttendance">-</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">本月出勤率</span>
+                        <span class="status-value" id="monthRate">-</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalCheckin">-</div>
+                            <div class="stat-label">已签到</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalLate">-</div>
+                            <div class="stat-label">迟到</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalLeave">-</div>
+                            <div class="stat-label">请假</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 我的考勤记录入口 -->
+        <div class="quick-actions">
+            <div class="section-title">更多功能</div>
+            <div class="quick-grid">
+                <div class="quick-card" onclick="location.href='/student_attendance'">
+                    <span class="quick-icon icon-record"><i class="fas fa-chart-bar"></i></span>
+                    <div class="quick-title">考勤记录</div>
+                    <div class="quick-desc">详细统计</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部标签栏 -->
+    <nav class="bottom-tab-bar">
+        <a href="/student_index" class="tab-item active">
+            <span class="tab-icon"><i class="fas fa-home"></i></span>
+            <span class="tab-label">首页</span>
+        </a>
+        <a href="/student_checkin" class="tab-item tab-center">
+            <span class="tab-icon"><i class="fas fa-clipboard-check"></i></span>
+            <span class="tab-label">打卡</span>
+        </a>
+        <a href="/student_leave" class="tab-item">
+            <span class="tab-icon"><i class="fas fa-file-alt"></i></span>
+            <span class="tab-label">请假</span>
+        </a>
+        <a href="/student_attendance" class="tab-item">
+            <span class="tab-icon"><i class="fas fa-user"></i></span>
+            <span class="tab-label">我的</span>
+        </a>
+    </nav>
+
+    <script>
+        let currentUser = null;
+        let authToken = '';
+
+        function authFetch(url, options = {}) {
+            options.headers = options.headers || {};
+            if (authToken) {
+                options.headers['Authorization'] = 'Bearer ' + authToken;
+            }
+            return fetch(url, options);
+        }
+
+        function initUser() {
+            console.log('=== initUser ===');
+            
+            const userDataStr = localStorage.getItem('currentUser');
+            console.log('localStorage currentUser:', userDataStr);
+            
+            if (!userDataStr) {
+                console.log('No currentUser in localStorage');
+                location.href = '/login';
+                return;
+            }
+
+            try {
+                currentUser = JSON.parse(userDataStr);
+                authToken = currentUser.token || '';
+                
+                console.log('Parsed currentUser:', currentUser);
+                console.log('authToken:', authToken);
+
+                const username = currentUser.username || currentUser.name || currentUser.userName || '未知用户';
+                const userId = currentUser.userId || currentUser.id;
+                
+                if (!userId) {
+                    alert('用户ID不存在，请重新登录');
+                    localStorage.removeItem('currentUser');
+                    location.href = '/login';
+                    return;
+                }
+
+                const userRole = currentUser.role || currentUser.userRole || '';
+                console.log('userRole:', userRole);
+                
+                if (userRole && userRole.toLowerCase() !== 'student') {
+                    alert('当前用户不是学生，无法访问学生端');
+                    localStorage.removeItem('currentUser');
+                    location.href = '/login';
+                    return;
+                }
+
+                const userElement = document.getElementById('currentUser');
+                console.log('用户元素:', userElement);
+                
+                if (userElement) {
+                    userElement.textContent = username;
+                    console.log('用户名已设置:', username);
+                } else {
+                    console.error('找不到currentUser元素');
+                }
+                
+                loadAttendanceStats();
+                
+            } catch (e) {
+                localStorage.removeItem('currentUser');
+                location.href = '/login';
+            }
+        }
+
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('token');
+                location.href = '/login';
+            }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}`;
+        }
+
+        function loadAttendanceStats() {
+            console.log('=== loadAttendanceStats ===');
+            console.log('currentUser:', currentUser);
+            console.log('authToken:', authToken);
+            const userId = currentUser.userId || currentUser.id;
+            console.log('userId:', userId);
+            
+            // 加载本周考勤统计
+            authFetch(`/api/attendance/user/${userId}`)
+                .then(response => {
+                    console.log('考勤API响应状态:', response.status);
+                    return response.json();
+                })
+                .then(result => {
+                    console.log('考勤API结果:', result);
+                    // 处理两种返回格式：直接数组或封装格式
+                    const records = Array.isArray(result) ? result : (result.data ? (Array.isArray(result.data) ? result.data : [result.data]) : []);
+                    
+                    // 统计本周数据
+                    const now = new Date();
+                    const weekStart = new Date(now);
+                    weekStart.setDate(now.getDate() - now.getDay() + 1);
+                    weekStart.setHours(0, 0, 0, 0);
+                    
+                    const weekRecords = records.filter(r => {
+                        const recordDate = new Date(r.checkinTime || r.createTime);
+                        return recordDate >= weekStart;
+                    });
+                    
+                    const presentCount = weekRecords.filter(r => r.status === 'present' || r.status === '准时').length;
+                    const lateCount = weekRecords.filter(r => r.status === 'late' || r.status === '迟到').length;
+                    
+                    document.getElementById('weekAttendance').textContent = `${presentCount}次`;
+                    document.getElementById('totalCheckin').textContent = records.length;
+                    document.getElementById('totalLate').textContent = lateCount;
+                    
+                    // 计算出勤率
+                    const total = records.length;
+                    const rate = total > 0 ? Math.round((presentCount / Math.max(total, 1)) * 100) : 0;
+                    document.getElementById('monthRate').textContent = `${rate}%`;
+                })
+                .catch(error => {
+                    console.error('加载考勤统计失败:', error);
+                });
+
+            // 加载请假统计
+            authFetch(`/api/leave/user/${userId}`)
+                .then(response => response.json())
+                .then(result => {
+                    console.log('请假API结果:', result);
+                    const records = Array.isArray(result) ? result : (result.data ? (Array.isArray(result.data) ? result.data : [result.data]) : []);
+                    document.getElementById('totalLeave').textContent = records.length;
+                })
+                .catch(error => {
+                    console.error('加载请假统计失败:', error);
+                });
+        }
+
+        initUser();
+        updateTime();
+        setInterval(updateTime, 60000); // 每分钟更新时间
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

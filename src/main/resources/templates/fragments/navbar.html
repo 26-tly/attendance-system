@@ -1,35 +1,54 @@
-<!DOCTYPE html>
-<html lang="en">
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>导航组件</title>
-</head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark"
-     th:fragment="navbar">
+<nav class="navbar navbar-expand-lg navbar-dark bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
   <div class="container">
-    <a class="navbar-brand" href="/">考勤系统</a>
-    <button class="navbar-toggler" type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarNav">
+    <a class="navbar-brand fw-bold" href="/">
+        Attendance System
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav">
+      <ul class="navbar-nav me-auto">
         <li class="nav-item">
-          <a class="nav-link" href="/attendance/checkIn">
-            考勤打卡
-          </a>
+          <a class="nav-link active" href="/">Home</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Students</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/studentForm">Add Student</a></li>
+            <li><a class="dropdown-item" href="/studentList">Student List</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Attendance</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/attendance/checkin">Check In</a></li>
+            <li><a class="dropdown-item" href="/attendance/list">Attendance List</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Courses</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/course/form">Add Course</a></li>
+            <li><a class="dropdown-item" href="/course/list">Course List</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Leave</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/leave/apply">Apply Leave</a></li>
+            <li><a class="dropdown-item" href="/leave/list">Leave List</a></li>
+          </ul>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/attendance/list">
-            考勤记录
-          </a>
+          <a class="nav-link" href="/logs">Logs</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/excel/uploads.html">Excel</a>
         </li>
       </ul>
+      <div class="d-flex align-items-center">
+        <a href="/login" class="btn btn-outline-light btn-sm ms-2">Logout</a>
+      </div>
     </div>
   </div>
 </nav>
-</body>
-</html>

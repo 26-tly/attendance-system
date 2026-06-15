@@ -1,44 +1,80 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>考勤管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: "Microsoft YaHei", sans-serif;
-            background: #f0f2f5;
-            margin: 0;
-            padding: 0;
-        }
-        .header {
-            background: #1a73e8;
-            color: white;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .content {
-            padding: 30px;
-            text-align: center;
-        }
-        .logout-btn {
-            color: white;
-            text-decoration: none;
-            padding: 8px 15px;
-            background: #dc3545;
-            border-radius: 4px;
-        }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f7fa; margin: 0; padding: 0; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .page-content { padding: 30px; max-width: 1200px; margin: 0 auto; }
+        .stat-card { background: white; border-radius: 12px; padding: 20px; margin: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .stat-value { font-size: 32px; font-weight: bold; color: #667eea; }
     </style>
 </head>
 <body>
-<div class="header">
-    <h1>考勤管理系统</h1>
-    <a th:href="@{/logout}" class="logout-btn">退出登录</a>
-</div>
-<div class="content">
-    <h2>欢迎来到系统首页！</h2>
-    <p>你已成功登录，可以使用系统功能。</p>
-</div>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">考勤管理系统</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/studentList">学生管理</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/course/list">课程管理</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/attendance/list">考勤记录</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/leave/list">请假管理</a></li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span class="text-light me-3" id="currentUser"></span>
+                    <button onclick="logout()" class="btn btn-outline-light btn-sm">退出登录</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <script>
+        // 显示当前登录用户
+        const user = localStorage.getItem('currentUser');
+        if (user) {
+            const userData = JSON.parse(user);
+            document.getElementById('currentUser').textContent = '欢迎, ' + (userData.username || '用户');
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('currentUser');
+                location.href = '/login';
+            }
+        }
+    </script>
+
+    <div class="page-content">
+        <h1>欢迎使用考勤管理系统</h1>
+        <div class="row">
+            <div class="col-md-3 stat-card">
+                <div class="stat-value" id="studentCount">--</div>
+                <div>学生总数</div>
+            </div>
+            <div class="col-md-3 stat-card">
+                <div class="stat-value" id="courseCount">--</div>
+                <div>课程总数</div>
+            </div>
+            <div class="col-md-3 stat-card">
+                <div class="stat-value" id="attendanceCount">--</div>
+                <div>考勤记录</div>
+            </div>
+            <div class="col-md-3 stat-card">
+                <div class="stat-value" id="leaveCount">--</div>
+                <div>请假申请</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        fetch('/api/course/list').then(r=>r.json()).then(d=>{document.getElementById('courseCount').textContent=d.length});
+        fetch('/api/student/list?page=0&size=1').then(r=>r.json()).then(d=>{document.getElementById('studentCount').textContent=d.totalElements||0});
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

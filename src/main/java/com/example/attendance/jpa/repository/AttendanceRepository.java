@@ -9,7 +9,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 考勤表数据访问层 - 查询条件完全拆分版
@@ -24,9 +26,19 @@ public interface AttendanceRepository extends JpaRepository<Attendance,Integer>{
     List<Attendance> findByUserId(Integer userId);
 
     /**
+     * 按用户ID删除所有考勤记录（级联删除）
+     */
+    void deleteByUserId(Integer userId);
+
+    /**
      * 按课程ID查询所有考勤记录
      */
     List<Attendance> findByCourseId(Integer courseId);
+
+    /**
+     * 按课程ID统计考勤记录数量
+     */
+    long countByCourseId(Integer courseId);
 
     /**
      * 按考勤日期查询所有考勤记录
@@ -116,5 +128,12 @@ public interface AttendanceRepository extends JpaRepository<Attendance,Integer>{
             Pageable pageable
     );
 
+    // 8. 按用户ID、课程ID和签到时间范围查询（用于二维码签到重复检测）
+    Optional<Attendance> findByUserIdAndCourseIdAndCheckinTimeBetween(
+            Integer userId,
+            Integer courseId,
+            LocalDateTime startTime,
+            LocalDateTime endTime
+    );
 
 }

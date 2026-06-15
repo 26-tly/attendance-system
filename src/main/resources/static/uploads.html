@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel导入导出</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .upload-card {
+            max-width: 600px;
+            margin: 0 auto;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .upload-icon svg {
+            width: 32px;
+            height: 32px;
+            color: white;
+        }
+        .btn-export {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border: none;
+            color: white;
+        }
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(17, 153, 142, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="fragments/navbar :: navbar" xmlns:th="http://www.thymeleaf.org"></div>
+
+    <div class="container mt-5" style="padding: 30px;">
+        <div class="card upload-card">
+            <div class="card-header bg-white border-bottom-0">
+                <h3 class="font-bold text-gray-800">Excel导入导出</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-700 mb-3">导入考勤数据</h4>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                        <p class="text-gray-600">点击或拖拽Excel文件到此处上传</p>
+                        <p class="text-gray-400 text-sm mt-2">支持 .xls 和 .xlsx 格式，最大100MB</p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".xls,.xlsx" style="display: none;">
+                </div>
+
+                <div id="uploadResult" style="display: none;">
+                    <div class="alert alert-success" id="successAlert"></div>
+                    <div class="alert alert-danger" id="errorAlert"></div>
+                </div>
+
+                <div class="border-t pt-4">
+                    <h4 class="font-semibold text-gray-700 mb-3">导出考勤数据</h4>
+                    <button onclick="exportExcel()" class="btn btn-export btn-lg w-full py-3 rounded-xl font-semibold">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        导出Excel文件
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                uploadFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                uploadFile(e.target.files[0]);
+            }
+        });
+
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const resultDiv = document.getElementById('uploadResult');
+            const successAlert = document.getElementById('successAlert');
+            const errorAlert = document.getElementById('errorAlert');
+
+            successAlert.style.display = 'none';
+            errorAlert.style.display = 'none';
+            resultDiv.style.display = 'block';
+
+            fetch('/excel/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.code === 200) {
+                    const successList = data.data.success;
+                    const failList = data.data.fail;
+                    let message = `成功导入 ${successList.length} 条记录`;
+                    if (failList.length > 0) {
+                        message += `，失败 ${failList.length} 条：<br>${failList.join('<br>')}`;
+                    }
+                    successAlert.innerHTML = message;
+                    successAlert.style.display = 'block';
+                } else {
+                    errorAlert.textContent = data.msg;
+                    errorAlert.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                errorAlert.textContent = '上传失败：' + error.message;
+                errorAlert.style.display = 'block';
+            });
+        }
+
+        function exportExcel() {
+            window.location.href = '/excel/export';
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,54 +1,402 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>登录</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考勤管理系统 - 登录</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        * {margin:0;padding:0;box-sizing:border-box;font-family: "Microsoft YaHei"}
-        body {background:#f0f2f5;display:flex;justify-content:center;align-items:center;height:100vh}
-        .box {background:white;padding:30px;border-radius:8px;width:400px;box-shadow:0 2px 10px #0000001a}
-        h2 {text-align:center;margin-bottom:20px;color:#1a73e8}
-        .form-group {margin-bottom:15px}
-        label {display:block;margin-bottom:5px}
-        input {width:100%;padding:10px;border:1px solid #ddd;border-radius:4px}
-        button {width:100%;padding:10px;background:#1a73e8;color:white;border:none;border-radius:4px;margin-top:10px}
-        .tip {text-align:center;margin-top:15px}
-        a {color:#1a73e8}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+        .bg-animation {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .bg-animation .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 15s infinite;
+        }
+        .circle:nth-child(1) {
+            width: 200px;
+            height: 200px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        .circle:nth-child(2) {
+            width: 150px;
+            height: 150px;
+            top: 60%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+        .circle:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            bottom: 20%;
+            left: 30%;
+            animation-delay: 4s;
+        }
+        .circle:nth-child(4) {
+            width: 80px;
+            height: 80px;
+            top: 40%;
+            right: 40%;
+            animation-delay: 6s;
+        }
+        .circle:nth-child(5) {
+            width: 120px;
+            height: 120px;
+            top: 80%;
+            right: 5%;
+            animation-delay: 8s;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+            50% { transform: translateY(-30px) rotate(180deg); opacity: 0.8; }
+        }
+        .login-container {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            padding: 50px;
+            width: 100%;
+            max-width: 450px;
+            animation: slideUp 0.6s ease-out;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        .icon-wrapper {
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        .icon-wrapper::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .icon-wrapper svg {
+            width: 45px;
+            height: 45px;
+            color: white;
+            position: relative;
+            z-index: 1;
+        }
+        .login-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .login-header p {
+            color: #666;
+            font-size: 15px;
+        }
+        .form-floating {
+            margin-bottom: 22px;
+        }
+        .form-floating input {
+            height: 56px;
+            border-radius: 14px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+            padding-left: 45px;
+            font-size: 15px;
+        }
+        .form-floating input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.12);
+            outline: none;
+        }
+        .form-floating label {
+            padding-left: 45px;
+            font-size: 14px;
+            color: #888;
+        }
+        .input-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+            transition: color 0.3s ease;
+        }
+        .form-floating:focus-within .input-icon {
+            color: #667eea;
+        }
+        .btn-login {
+            width: 100%;
+            height: 56px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+        .btn-login:hover::before {
+            transform: translateX(100%);
+        }
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.45);
+        }
+        .btn-login:active {
+            transform: translateY(-1px);
+        }
+        .btn-login svg {
+            width: 18px;
+            height: 18px;
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #eee;
+        }
+        .login-footer p {
+            color: #666;
+            font-size: 14px;
+        }
+        .login-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        .login-footer a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        .alert-message {
+            display: none;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            padding: 16px;
+            animation: shake 0.4s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-<div class="box">
-    <h2>用户登录</h2>
-    <form id="loginForm">
-        <div class="form-group">
-            <label>用户名</label>
-            <input type="text" id="username">
-        </div>
-        <div class="form-group">
-            <label>密码</label>
-            <input type="password" id="password">
-        </div>
-        <button type="submit">登录</button>
-        <div class="tip">没有账号 <a href="/register">去注册</a></div>
-    </form>
-</div>
+    <div class="bg-animation">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
 
-<script>
-    document.getElementById("loginForm").addEventListener("submit", function(e){
-        e.preventDefault();
-        let username = document.getElementById("username").value;
-        let password = document.getElementById("password").value;
+    <div class="login-container">
+        <div class="login-header">
+            <div class="icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </div>
+            <h1>考勤管理系统</h1>
+            <p>请登录您的账号</p>
+        </div>
 
-        fetch("/jpa/user/login", {
-            method: "POST",
-            headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({username, password})
-        }).then(res=>res.json())
-          .then(data=>{
-            alert("登录成功");
-            location.href="/index";
-        })
-    });
-</script>
+        <div class="alert alert-danger alert-message" id="errorAlert" role="alert">
+            <div class="d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <span id="errorMessage"></span>
+            </div>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-floating position-relative">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <input type="text" class="form-control" id="username" placeholder="用户名" required>
+                <label for="username">用户名</label>
+            </div>
+            <div class="form-floating position-relative">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <input type="password" class="form-control" id="password" placeholder="密码" required>
+                <label for="password">密码</label>
+            </div>
+            <button type="submit" class="btn btn-login" id="loginBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 3h6v6"></path>
+                    <path d="M21 3l-7 7-4-4-6 6"></path>
+                    <path d="M3 15v6H9"></path>
+                </svg>
+                <span>登录</span>
+                <div class="loading-spinner" id="loadingSpinner"></div>
+            </button>
+        </form>
+
+        <div class="login-footer">
+            <p>没有账号？<a href="/register">立即注册</a></p>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载时检查是否已登录
+        if (localStorage.getItem('currentUser')) {
+            location.href = "/index";
+        }
+
+        document.getElementById("loginForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            const errorAlert = document.getElementById("errorAlert");
+            const loginBtn = document.getElementById("loginBtn");
+            const loadingSpinner = document.getElementById("loadingSpinner");
+            const loginText = loginBtn.querySelector("span");
+            
+            errorAlert.style.display = "none";
+            loginBtn.disabled = true;
+            loadingSpinner.style.display = "inline-block";
+            loginText.style.display = "none";
+            
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            fetch("/user/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.msg === "登录成功") {
+                    // 保存用户登录信息
+                    localStorage.setItem('currentUser', JSON.stringify(data.data));
+                    localStorage.setItem('token', data.data.token);
+                    loginBtn.style.background = "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)";
+                    
+                    // 根据用户角色跳转到不同页面
+                    const userRole = data.data.role || data.data.userRole;
+                    let redirectUrl = "/index";
+                    if (userRole === "student") {
+                        redirectUrl = "/student_index";
+                    } else if (userRole === "teacher") {
+                        redirectUrl = "/teacher_index";
+                    }
+                    
+                    setTimeout(() => {
+                        location.href = redirectUrl;
+                    }, 500);
+                } else {
+                    document.getElementById("errorMessage").textContent = data.msg || "登录失败";
+                    errorAlert.style.display = "block";
+                    resetLoginButton();
+                }
+            })
+            .catch(error => {
+                document.getElementById("errorMessage").textContent = "网络错误，请稍后重试";
+                errorAlert.style.display = "block";
+                resetLoginButton();
+            });
+            
+            function resetLoginButton() {
+                loginBtn.disabled = false;
+                loadingSpinner.style.display = "none";
+                loginText.style.display = "inline";
+                loginBtn.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

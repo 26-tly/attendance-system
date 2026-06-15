@@ -1,20 +1,13 @@
 package com.example.attendance.service;
 import com.example.attendance.entity.Student;
-import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public interface StudentService {
 
+    String courses();
 
-    public abstract String courses();
-
-
-
-    public abstract List<Student> getStudentList(
-            @RequestParam("className") String className,
-            @RequestParam(value = "page", defaultValue = "1") Integer page);
+    List<Student> getStudentList(String className, Integer page);
 
 
 

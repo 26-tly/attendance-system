@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>签到历史查询 - 考勤管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 220px;
+            background: linear-gradient(180deg, #1e3a5f 0%, #2d4a6f 100%);
+            color: white;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-logo {
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .sidebar-menu {
+            padding: 10px 0;
+        }
+        
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .sidebar-item:hover, .sidebar-item.active {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-item i {
+            width: 20px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        .sidebar-item span {
+            font-size: 14px;
+        }
+        
+        .main-content {
+            margin-left: 220px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .topbar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 220px;
+            height: 60px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 900;
+        }
+        
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .topbar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .topbar-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .topbar-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .content-wrapper {
+            margin-top: 60px;
+            padding: 20px;
+        }
+        
+        .content-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .filter-section { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .table-responsive { overflow-x: auto; }
+        .status-present { color: #11998e; font-weight: bold; }
+        .status-absent { color: #f5576c; font-weight: bold; }
+        .status-late { color: #f7b733; font-weight: bold; }
+        .status-leave { color: #667eea; font-weight: bold; }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        
+        .pagination-container { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 10px; 
+            margin-top: 20px; 
+        }
+        
+        .pagination-btn { 
+            padding: 8px 16px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            background: white; 
+            cursor: pointer; 
+        }
+        
+        .pagination-btn:hover:not(:disabled) { 
+            background: #f0f0f0; 
+        }
+        
+        .pagination-btn:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .topbar {
+                left: 0;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <i class="fas fa-clipboard-list"></i>
+                <span>考勤管理系统</span>
+            </div>
+        </div>
+        <nav class="sidebar-menu">
+            <a href="/teacher_index" class="sidebar-item" id="nav-home">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            <a href="/course/list" class="sidebar-item" id="nav-courses">
+                <i class="fas fa-book-open"></i>
+                <span>课程管理</span>
+            </a>
+            <a href="/teacher_checkin" class="sidebar-item" id="nav-qrcode">
+                <i class="fas fa-qrcode"></i>
+                <span>二维码签到</span>
+            </a>
+            <a href="/studentList" class="sidebar-item" id="nav-students">
+                <i class="fas fa-user-graduate"></i>
+                <span>学生管理</span>
+            </a>
+            <a href="/attendance/history" class="sidebar-item active" id="nav-history">
+                <i class="fas fa-history"></i>
+                <span>签到历史</span>
+            </a>
+            <a href="/leave/list" class="sidebar-item" id="nav-leave">
+                <i class="fas fa-calendar-times"></i>
+                <span>请假管理</span>
+            </a>
+            <a href="/attendance/logs" class="sidebar-item" id="nav-logs">
+                <i class="fas fa-file-alt"></i>
+                <span>操作日志</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="topbar-btn" id="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="topbar-title">签到历史查询</span>
+            </div>
+            <div class="topbar-right">
+                <button class="topbar-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <div class="topbar-user">
+                    <span id="currentUser">欢迎, 教师</span>
+                    <div class="user-avatar" id="userAvatar">T</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="logout()">退出登录</button>
+            </div>
+        </header>
+
+        <main class="content-wrapper">
+            <div class="filter-section">
+                <h5 class="mb-3">查询条件</h5>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">课程：</label>
+                        <select id="courseSelect" class="form-select">
+                            <option value="">全部课程</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">学生学号：</label>
+                        <input type="text" id="studentNo" class="form-control" placeholder="学号">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">签到状态：</label>
+                        <select id="statusFilter" class="form-select">
+                            <option value="">全部</option>
+                            <option value="present">已签到</option>
+                            <option value="absent">未签到</option>
+                            <option value="late">迟到</option>
+                            <option value="leave">请假</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">开始日期：</label>
+                        <input type="date" id="startDate" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">结束日期：</label>
+                        <input type="date" id="endDate" class="form-control">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button onclick="searchHistory()" class="btn btn-primary w-100">查询</button>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button onclick="exportHistory()" class="btn btn-success w-100">导出Excel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>课程</th>
+                                <th>学号</th>
+                                <th>姓名</th>
+                                <th>签到状态</th>
+                                <th>签到时间</th>
+                                <th>是否补签</th>
+                                <th>补签原因</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTable">
+                            <tr><td colspan="8" class="text-center">请输入查询条件</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-container">
+                    <button class="pagination-btn" onclick="goToPrevPage()" id="prevBtn" disabled>上一页</button>
+                    <span class="pagination-info" id="pageInfo">第 1 / 1 页</span>
+                    <button class="pagination-btn" onclick="goToNextPage()" id="nextBtn" disabled>下一页</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const userData = localStorage.getItem('currentUser');
+        if (!userData) {
+            location.href = '/login';
+        }
+        const user = JSON.parse(userData);
+        document.getElementById('currentUser').textContent = '欢迎, ' + user.username;
+        document.getElementById('userAvatar').textContent = user.username.charAt(0).toUpperCase();
+
+        let currentPage = 0;
+        const pageSize = 10;
+        const authToken = user.token || '';
+
+        function authFetch(url, options = {}) {
+            options.headers = options.headers || {};
+            if (authToken) {
+                options.headers['Authorization'] = 'Bearer ' + authToken;
+            }
+            return fetch(url, options);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            
+            loadCourses();
+            searchHistory();
+        });
+
+        document.getElementById('toggleSidebar').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('currentUser');
+                location.href = '/login';
+            }
+        }
+
+        function loadCourses() {
+            authFetch('/api/course/list')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('courseSelect');
+                    data.forEach(course => {
+                        const option = document.createElement('option');
+                        option.value = course.courseId;
+                        option.textContent = `${course.courseName} (${course.classroom})`;
+                        select.appendChild(option);
+                    });
+                });
+        }
+
+        function searchHistory(page = 0) {
+            currentPage = page;
+            const courseId = document.getElementById('courseSelect').value;
+            const studentNo = document.getElementById('studentNo').value.trim();
+            const status = document.getElementById('statusFilter').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            let url = `/api/attendance-management/history?page=${page}&size=${pageSize}`;
+            if (courseId) url += `&courseId=${courseId}`;
+            if (studentNo) url += `&studentNo=${studentNo}`;
+            if (status) url += `&status=${status}`;
+            if (startDate) url += `&startDate=${startDate}`;
+            if (endDate) url += `&endDate=${endDate}`;
+
+            authFetch(url)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.code === 200 && result.data) {
+                        displayHistory(result.data);
+                    }
+                });
+        }
+
+        function displayHistory(data) {
+            const tbody = document.getElementById('historyTable');
+            
+            if (!data.content || data.content.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">暂无数据</td></tr>';
+                document.getElementById('pageInfo').textContent = '第 1 / 1 页';
+                document.getElementById('prevBtn').disabled = true;
+                document.getElementById('nextBtn').disabled = true;
+                return;
+            }
+
+            tbody.innerHTML = data.content.map(record => {
+                const statusClass = `status-${record.status}`;
+                const statusText = { present: '已签到', absent: '未签到', late: '迟到', leave: '请假' }[record.status] || '未知';
+                const checkinTime = record.checkinTime ? new Date(record.checkinTime).toLocaleString() : '-';
+                const attendanceDate = record.attendanceDate ? new Date(record.attendanceDate).toLocaleDateString() : '-';
+                
+                return `<tr>
+                    <td>${attendanceDate}</td>
+                    <td>${record.courseName || record.courseId}</td>
+                    <td>${record.studentNo || '-'}</td>
+                    <td>${record.studentName || '-'}</td>
+                    <td class="${statusClass}">${statusText}</td>
+                    <td>${checkinTime}</td>
+                    <td>${record.isMakesUp ? '是' : '否'}</td>
+                    <td>${record.makesUpReason || '-'}</td>
+                </tr>`;
+            }).join('');
+
+            const totalPages = data.totalPages || 1;
+            const currentPageNum = data.number || 0;
+            document.getElementById('pageInfo').textContent = `第 ${currentPageNum + 1} / ${totalPages} 页`;
+            document.getElementById('prevBtn').disabled = currentPageNum === 0;
+            document.getElementById('nextBtn').disabled = currentPageNum >= totalPages - 1;
+        }
+
+        function goToPrevPage() {
+            if (currentPage > 0) {
+                searchHistory(currentPage - 1);
+            }
+        }
+
+        function goToNextPage() {
+            const pageInfo = document.getElementById('pageInfo').textContent;
+            const match = pageInfo.match(/第 (\d+) \/ (\d+) 页/);
+            if (match && currentPage < parseInt(match[2]) - 1) {
+                searchHistory(currentPage + 1);
+            }
+        }
+
+        function exportHistory() {
+            const courseId = document.getElementById('courseSelect').value;
+            const studentNo = document.getElementById('studentNo').value.trim();
+            const status = document.getElementById('statusFilter').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            let url = '/api/attendance-management/export';
+            const params = [];
+            if (courseId) params.push(`courseId=${courseId}`);
+            if (studentNo) params.push(`studentNo=${studentNo}`);
+            if (status) params.push(`status=${status}`);
+            if (startDate) params.push(`startDate=${startDate}`);
+            if (endDate) params.push(`endDate=${endDate}`);
+            
+            if (params.length > 0) {
+                url += '?' + params.join('&');
+            }
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = '签到历史.xlsx';
+            
+            const headers = new Headers();
+            if (authToken) {
+                headers.append('Authorization', 'Bearer ' + authToken);
+            }
+            
+            fetch(url, { headers })
+                .then(response => response.blob())
+                .then(blob => {
+                    const objectUrl = URL.createObjectURL(blob);
+                    link.href = objectUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(objectUrl);
+                })
+                .catch(error => {
+                    console.error('导出失败:', error);
+                    alert('导出失败，请稍后重试');
+                });
+        }
+    </script>
+</body>
+</html>
