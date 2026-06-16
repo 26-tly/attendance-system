@@ -135,5 +135,13 @@ public interface AttendanceRepository extends JpaRepository<Attendance,Integer>{
             LocalDateTime startTime,
             LocalDateTime endTime
     );
+    
+    Optional<Attendance> findByUserIdAndSessionCode(Integer userId, String sessionCode);
+
+    // 按会话码查询所有签到记录
+    List<Attendance> findBySessionCode(String sessionCode);
+    
+    // 按会话码统计签到记录数量
+    long countBySessionCode(String sessionCode);
 
 }

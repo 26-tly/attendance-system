@@ -2,6 +2,9 @@ package com.example.attendance.jpa.controller;
 
 import com.example.attendance.common.Result;
 import com.example.attendance.jpa.service.CourseStudentService;
+import com.example.attendance.jpa.repository.UserRepository;
+import com.example.attendance.jpa.repository.StudentRepository;
+import com.example.attendance.jpa.entity.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,9 +16,15 @@ import java.util.Map;
 public class CourseStudentController {
 
     private final CourseStudentService courseStudentService;
+    private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
 
-    public CourseStudentController(CourseStudentService courseStudentService) {
+    public CourseStudentController(CourseStudentService courseStudentService,
+                                   UserRepository userRepository,
+                                   StudentRepository studentRepository) {
         this.courseStudentService = courseStudentService;
+        this.userRepository = userRepository;
+        this.studentRepository = studentRepository;
     }
 
     @GetMapping("/course/{courseId}/students")
@@ -25,6 +34,29 @@ public class CourseStudentController {
 
     @GetMapping("/student/{studentId}/courses")
     public ResponseEntity<Result<List<Map<String, Object>>>> getCoursesByStudentId(@PathVariable Long studentId) {
+        return ResponseEntity.ok(courseStudentService.getCoursesByStudentId(studentId));
+    }
+
+    @GetMapping("/user/{userId}/courses")
+    public ResponseEntity<Result<List<Map<String, Object>>>> getCoursesByUserId(@PathVariable Integer userId) {
+        System.out.println("[getCoursesByUserId] userId=" + userId);
+        
+        User user = userRepository.findById(userId).orElse(null);
+        System.out.println("[getCoursesByUserId] User: " + (user != null ? "username=" + user.getUsername() : "null"));
+        
+        if (user == null) {
+            return ResponseEntity.ok(Result.error("用户不存在"));
+        }
+        List<com.example.attendance.jpa.entity.Student> students = studentRepository.findByStudentNo(user.getUsername());
+        System.out.println("[getCoursesByUserId] Students found: " + students.size());
+        
+        if (students.isEmpty()) {
+            return ResponseEntity.ok(Result.error("学生信息不存在"));
+        }
+        
+        Long studentId = students.get(0).getId();
+        System.out.println("[getCoursesByUserId] studentId=" + studentId);
+        
         return ResponseEntity.ok(courseStudentService.getCoursesByStudentId(studentId));
     }
 

@@ -13,6 +13,8 @@ public interface CheckinSessionService {
     
     Result<CheckinSession> getSessionByCode(String sessionCode);
     
+    Result<CheckinSession> getSessionById(Long sessionId);
+    
     Result<Map<String, Object>> validateCheckin(String sessionCode, Integer userId, Integer studentId);
     
     Result<List<CheckinSession>> getTeacherSessions(Integer teacherId);
@@ -23,5 +25,5 @@ public interface CheckinSessionService {
     
     Result<CheckinSession> getActiveSessionByCourse(Integer courseId);
     
-    Result<List<CheckinSession>> getAllActiveSessions();
+    Result<List<Map<String, Object>>> getAllActiveSessions();
 }

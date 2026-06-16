@@ -348,13 +348,39 @@
 
     <script>
         let currentUser = null;
+        let authToken = '';
+
+        function authFetch(url, options = {}) {
+            options.headers = options.headers || {};
+            if (authToken) {
+                options.headers['Authorization'] = 'Bearer ' + authToken;
+            }
+            return fetch(url, options);
+        }
 
         function initUser() {
             const userDataStr = localStorage.getItem('currentUser');
-            if (!userDataStr) {
-                location.href = '/login';
+            const token = localStorage.getItem('token');
+            
+            // 检查URL参数中是否有签到码（微信扫码跳转）
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeFromUrl = urlParams.get('code');
+            
+            if (!userDataStr || !token) {
+                // 未登录，检查是否有待提交的签到码
+                if (codeFromUrl) {
+                    // 保存签到码到localStorage
+                    localStorage.setItem('pendingCheckinCode', codeFromUrl);
+                    console.log('保存待签到码:', codeFromUrl);
+                }
+                // 跳转到登录页面，并带上重定向参数
+                const currentUrl = window.location.href;
+                const encodedUrl = encodeURIComponent(currentUrl);
+                location.href = '/login?redirect=' + encodedUrl;
                 return false;
             }
+
+            authToken = token;
 
             try {
                 currentUser = JSON.parse(userDataStr);
@@ -362,6 +388,8 @@
                 if (!currentUser.userId || !currentUser.username) {
                     alert('用户信息不完整，请重新登录');
                     localStorage.removeItem('currentUser');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('pendingCheckinCode');
                     location.href = '/login';
                     return false;
                 }
@@ -369,15 +397,36 @@
                 if (currentUser.role && currentUser.role !== 'student' && currentUser.role !== 'STUDENT') {
                     alert('当前用户不是学生，无法访问学生端');
                     localStorage.removeItem('currentUser');
+                    localStorage.removeItem('token');
                     location.href = '/login';
                     return false;
                 }
 
                 document.getElementById('currentUser').textContent = '欢迎, ' + currentUser.username;
+                
+                // 检查是否有待提交的签到码（登录后返回）
+                const pendingCode = localStorage.getItem('pendingCheckinCode');
+                if (pendingCode) {
+                    document.getElementById('sessionCodeInput').value = pendingCode;
+                    localStorage.removeItem('pendingCheckinCode');
+                    // 自动提交签到
+                    setTimeout(() => {
+                        submitCheckin();
+                    }, 300);
+                } else if (codeFromUrl) {
+                    // URL中有签到码，直接使用
+                    document.getElementById('sessionCodeInput').value = codeFromUrl;
+                    setTimeout(() => {
+                        submitCheckin();
+                    }, 300);
+                }
+                
                 return true;
             } catch (e) {
                 console.error('解析用户数据失败:', e);
                 localStorage.removeItem('currentUser');
+                localStorage.removeItem('token');
+                localStorage.removeItem('pendingCheckinCode');
                 location.href = '/login';
                 return false;
             }
@@ -414,7 +463,7 @@
                 return;
             }
 
-            fetch('/api/checkin/validate', {
+            authFetch('/api/checkin/validate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -423,7 +472,12 @@
                     userId: studentId
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (response.status === 401) {
+                    throw new Error('登录已过期，请重新登录');
+                }
+                return response.json();
+            })
             .then(result => {
                 if (result.code === 200 && result.data) {
                     showState('successState');
@@ -434,8 +488,15 @@
             })
             .catch(error => {
                 console.error('签到失败:', error);
-                document.getElementById('errorMessage').textContent = '网络错误，请稍后重试';
-                showState('errorState');
+                if (error.message.includes('登录')) {
+                    alert(error.message);
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('token');
+                    location.href = '/login';
+                } else {
+                    document.getElementById('errorMessage').textContent = error.message || '网络错误，请稍后重试';
+                    showState('errorState');
+                }
             });
         }
 

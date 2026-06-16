@@ -201,43 +201,130 @@ public class AttendanceManagementServiceImpl implements AttendanceManagementServ
                                                                   LocalDate startDate, LocalDate endDate,
                                                                   Pageable pageable) {
         Long targetStudentId = studentId;
-        
+        Integer targetUserId = userId;
+
         if (studentNo != null && !studentNo.trim().isEmpty()) {
             List<Student> students = studentRepository.findByStudentNo(studentNo.trim());
             if (students != null && !students.isEmpty()) {
                 targetStudentId = students.get(0).getId();
+                User u = userRepository.findByUsername(studentNo.trim());
+                if (u != null) {
+                    targetUserId = u.getUserId();
+                }
             }
         }
-        
-        Page<AttendanceHistory> histories = historyRepository.findAttendanceHistoryWithConditions(
-                courseId, targetStudentId, userId, status, startDate, endDate, pageable);
 
-        Page<Map<String, Object>> result = histories.map(history -> {
+        List<Map<String, Object>> mergedList = new java.util.ArrayList<>();
+        java.util.Set<String> existingKeys = new java.util.HashSet<>();
+
+        // 从 attendance_history 表查询
+        Page<AttendanceHistory> histories = historyRepository.findAttendanceHistoryWithConditions(
+                courseId, targetStudentId, targetUserId, status, startDate, endDate, pageable);
+
+        for (AttendanceHistory h : histories.getContent()) {
             Map<String, Object> map = new HashMap<>();
-            map.put("id", history.getId());
-            map.put("courseId", history.getCourseId());
-            map.put("studentId", history.getStudentId());
-            map.put("userId", history.getUserId());
-            map.put("attendanceDate", history.getAttendanceDate());
-            map.put("status", history.getStatus());
-            map.put("sessionCode", history.getSessionCode());
-            map.put("checkinTime", history.getCheckinTime());
-            map.put("isMakesUp", history.getIsMakesUp());
-            map.put("makesUpReason", history.getMakesUpReason());
-            map.put("makesUpTime", history.getMakesUpTime());
-            
-            studentRepository.findById(history.getStudentId()).ifPresent(student -> {
-                map.put("studentNo", student.getStudentNo());
-                map.put("studentName", student.getName());
-            });
-            
-            courseRepository.findById(history.getCourseId()).ifPresent(course -> {
+            map.put("id", h.getId());
+            map.put("courseId", h.getCourseId());
+            map.put("userId", h.getUserId());
+            map.put("studentId", h.getStudentId());
+            map.put("attendanceDate", h.getAttendanceDate());
+            map.put("status", h.getStatus());
+            map.put("sessionCode", h.getSessionCode());
+            map.put("checkinTime", h.getCheckinTime());
+            map.put("isMakesUp", h.getIsMakesUp());
+            map.put("makesUpReason", h.getMakesUpReason());
+            map.put("makesUpTime", h.getMakesUpTime());
+
+            Integer cid = h.getCourseId();
+            if (cid != null) {
+                courseRepository.findById(cid).ifPresent(course -> {
+                    map.put("courseName", course.getCourseName());
+                });
+            }
+
+            Long histStudentId = h.getStudentId();
+            Integer histUserId = h.getUserId();
+            if (histStudentId != null) {
+                studentRepository.findById(histStudentId).ifPresent(student -> {
+                    map.put("studentNo", student.getStudentNo());
+                    map.put("studentName", student.getName());
+                });
+            }
+            if (!map.containsKey("studentNo") && histUserId != null) {
+                User u = userRepository.findById(histUserId).orElse(null);
+                if (u != null) {
+                    map.put("username", u.getUsername());
+                    List<Student> students = studentRepository.findByStudentNo(u.getUsername());
+                    if (!students.isEmpty()) {
+                        map.put("studentId", students.get(0).getId());
+                        map.put("studentNo", students.get(0).getStudentNo());
+                        map.put("studentName", students.get(0).getName());
+                    }
+                }
+            }
+
+            String key = h.getUserId() + "_" + (h.getSessionCode() != null ? h.getSessionCode() : "");
+            if (!existingKeys.contains(key)) {
+                existingKeys.add(key);
+                mergedList.add(map);
+            }
+        }
+
+        // 从 attendance 表补充查询（不依赖第一个表是否为空）
+        Page<Attendance> attendancesPage = attendanceRepository.findAttendanceWithConditions(
+                courseId, targetUserId, status, startDate, endDate, pageable);
+        List<Attendance> attendances = attendancesPage.getContent();
+        for (Attendance a : attendances) {
+            String key = a.getUserId() + "_" + (a.getSessionCode() != null ? a.getSessionCode() : "");
+            if (existingKeys.contains(key)) {
+                continue;
+            }
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", a.getAttendanceId());
+            map.put("courseId", a.getCourseId());
+            map.put("userId", a.getUserId());
+            map.put("attendanceDate", a.getAttendanceDate());
+            map.put("status", a.getStatus());
+            map.put("sessionCode", a.getSessionCode());
+            map.put("checkinTime", a.getCheckinTime());
+            map.put("isMakesUp", false);
+            map.put("makesUpReason", null);
+            map.put("makesUpTime", null);
+
+            courseRepository.findById(a.getCourseId()).ifPresent(course -> {
                 map.put("courseName", course.getCourseName());
             });
-            
-            return map;
+
+            User u = userRepository.findById(a.getUserId()).orElse(null);
+            if (u != null) {
+                map.put("username", u.getUsername());
+                List<Student> students = studentRepository.findByStudentNo(u.getUsername());
+                if (!students.isEmpty()) {
+                    map.put("studentId", students.get(0).getId());
+                    map.put("studentNo", students.get(0).getStudentNo());
+                    map.put("studentName", students.get(0).getName());
+                }
+            }
+
+            existingKeys.add(key);
+            mergedList.add(map);
+        }
+
+        mergedList.sort((m1, m2) -> {
+            Object d1 = m1.get("checkinTime");
+            Object d2 = m2.get("checkinTime");
+            if (d1 == null && d2 == null) return 0;
+            if (d1 == null) return 1;
+            if (d2 == null) return -1;
+            return ((LocalDateTime) d2).compareTo((LocalDateTime) d1);
         });
 
+        int start = pageable.getPageNumber() * pageable.getPageSize();
+        int end = Math.min(start + pageable.getPageSize(), mergedList.size());
+        List<Map<String, Object>> pageContent = start < mergedList.size() ? mergedList.subList(start, end) : new java.util.ArrayList<>();
+
+        Page<Map<String, Object>> result = new org.springframework.data.domain.PageImpl<>(pageContent, pageable, mergedList.size());
         return Result.success(result);
     }
 

@@ -474,6 +474,30 @@
                         </div>
                     </div>
 
+                    <div class="card" id="checkedInSection" style="display: none;">
+                        <div class="card-header">
+                            <i class="fas fa-user-check me-2"></i>
+                            已签到学生名单
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>学号</th>
+                                            <th>姓名</th>
+                                            <th>签到时间</th>
+                                            <th>状态</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="checkedInList">
+                                        <tr><td colspan="4" class="text-center text-gray-500">暂无签到记录</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="card" id="absentSection" style="display: none;">
                         <div class="card-header">
                             <i class="fas fa-user-slash me-2"></i>
@@ -529,6 +553,7 @@
         let currentSessionId = null;
         let countdownTimer = null;
         let statsTimer = null;
+        let serverIp = localStorage.getItem('serverIp') || null;
 
         function logout() {
             if (confirm('确定要退出登录吗？')) {
@@ -544,6 +569,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadCourses();
             loadActiveSessions();
+            fetchServerIp();
             
             const now = new Date();
             document.getElementById('startTime').value = now.toISOString().slice(0, 16);
@@ -551,18 +577,43 @@
             document.getElementById('endTime').value = endTime.toISOString().slice(0, 16);
         });
 
-        function loadCourses() {
-            fetch('/api/course/list')
+        function fetchServerIp() {
+            authFetch('/api/server/ip')
                 .then(response => response.json())
+                .then(result => {
+                    if (result.code === 200 && result.data) {
+                        serverIp = result.data.ip || '127.0.0.1';
+                        localStorage.setItem('serverIp', serverIp);
+                        console.log('获取服务器IP成功:', serverIp);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取服务器IP失败:', error);
+                    serverIp = localStorage.getItem('serverIp') || '127.0.0.1';
+                });
+        }
+
+        function loadCourses() {
+            authFetch('/api/course/list')
+                .then(response => {
+                    if (!response.ok) throw new Error('请求失败');
+                    return response.json();
+                })
                 .then(data => {
                     const select = document.getElementById('courseSelect');
                     select.innerHTML = '<option value="">请选择课程</option>';
-                    data.forEach(course => {
+                    const courses = Array.isArray(data) ? data : (data.data || []);
+                    courses.forEach(course => {
                         const option = document.createElement('option');
                         option.value = course.courseId;
                         option.textContent = course.courseName;
                         select.appendChild(option);
                     });
+                })
+                .catch(error => {
+                    console.error('加载课程失败:', error);
+                    const select = document.getElementById('courseSelect');
+                    select.innerHTML = '<option value="">加载课程失败</option>';
                 });
         }
 
@@ -580,7 +631,9 @@
                 return;
             }
 
-            fetch('/api/checkin/session', {
+            console.log('创建会话参数:', { courseId, startTime, endTime, teacherId: user.userId || user.id || 1 });
+
+            authFetch('/api/checkin/session/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -590,8 +643,15 @@
                     teacherId: user.userId || user.id || 1
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('响应状态:', response.status);
+                if (response.status === 401) {
+                    throw new Error('登录已过期，请重新登录');
+                }
+                return response.json();
+            })
             .then(result => {
+                console.log('响应结果:', result);
                 if (result.code === 200 && result.data) {
                     showSession(result.data);
                     loadActiveSessions();
@@ -601,12 +661,18 @@
             })
             .catch(error => {
                 console.error('创建会话失败:', error);
-                alert('创建失败');
+                if (error.message.includes('登录')) {
+                    alert(error.message);
+                    localStorage.removeItem('currentUser');
+                    location.href = '/login';
+                } else {
+                    alert('创建失败: ' + error.message + '，请检查浏览器控制台查看详细错误');
+                }
             });
         }
 
         function showSession(session) {
-            currentSessionId = session.id;
+            currentSessionId = session.sessionId || session.id;
             
             document.getElementById('qrcodeSection').style.display = 'block';
             document.getElementById('createBtn').disabled = true;
@@ -616,8 +682,17 @@
             const qrcodeElement = document.getElementById('qrcode');
             qrcodeElement.innerHTML = '';
             
+            let checkinUrl;
+            if (serverIp && serverIp !== '127.0.0.1') {
+                checkinUrl = 'http://' + serverIp + '/student_qrcode?code=' + session.sessionCode;
+            } else {
+                checkinUrl = window.location.origin + '/student_qrcode?code=' + session.sessionCode;
+            }
+            
+            console.log('生成的二维码URL:', checkinUrl);
+            
             new QRCode(qrcodeElement, {
-                text: session.sessionCode,
+                text: checkinUrl,
                 width: 250,
                 height: 250,
                 colorDark: '#000000',
@@ -666,14 +741,56 @@
                 .then(response => response.json())
                 .then(result => {
                     if (result.code === 200 && result.data) {
-                        document.getElementById('checkedCount').textContent = result.data.checkedCount || 0;
+                        // 优先使用实时计算的已签到人数（从 attendance 表查询）
+                        const actualCount = result.data.actualCheckedCount != null 
+                            ? result.data.actualCheckedCount 
+                            : (result.data.checkedCount || 0);
+                        document.getElementById('checkedCount').textContent = actualCount;
                         document.getElementById('totalCount').textContent = result.data.totalCount || 0;
+                        
+                        // 显示已签到学生列表
+                        if (result.data.checkedInStudents && result.data.checkedInStudents.length > 0) {
+                            displayCheckedInStudents(result.data.checkedInStudents);
+                        } else {
+                            // 即使没有学生列表，也要显示区块
+                            document.getElementById('checkedInSection').style.display = 'block';
+                            document.getElementById('checkedInList').innerHTML = '<tr><td colspan="4" class="text-center text-gray-500">暂无签到记录</td></tr>';
+                        }
                         
                         if (result.data.absentStudents) {
                             displayAbsentStudents(result.data.absentStudents);
                         }
+                    } else {
+                        console.log('统计数据返回:', result);
                     }
+                })
+                .catch(error => {
+                    console.error('获取统计数据失败:', error);
                 });
+        }
+        
+        function displayCheckedInStudents(students) {
+            const checkedInList = document.getElementById('checkedInList');
+            document.getElementById('checkedInSection').style.display = 'block';
+            
+            if (!students || students.length === 0) {
+                checkedInList.innerHTML = '<tr><td colspan="4" class="text-center text-gray-500">暂无签到记录</td></tr>';
+                return;
+            }
+            
+            checkedInList.innerHTML = students.map(student => {
+                const checkinTime = student.checkinTime ? new Date(student.checkinTime).toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit', second: '2-digit'}) : '-';
+                const studentNo = student.studentNo || student.username || '-';
+                const studentName = student.studentName || student.realName || '未知';
+                const status = student.status === 'present' ? '<span class="badge bg-success">已签到</span>' : '<span class="badge bg-warning">其他</span>';
+                
+                return `<tr>
+                    <td>${studentNo}</td>
+                    <td>${studentName}</td>
+                    <td>${checkinTime}</td>
+                    <td>${status}</td>
+                </tr>`;
+            }).join('');
         }
 
         function displayAbsentStudents(students) {
@@ -704,7 +821,7 @@
         function closeSession() {
             if (!currentSessionId) return;
             
-            fetch(`/api/checkin/session/${currentSessionId}/close`, {
+            authFetch(`/api/checkin/session/${currentSessionId}/close`, {
                 method: 'POST'
             })
             .then(response => response.json())
@@ -713,6 +830,7 @@
                     stopTimers();
                     clearQRCode();
                     document.getElementById('qrcodeSection').style.display = 'none';
+                    document.getElementById('checkedInSection').style.display = 'none';
                     document.getElementById('absentSection').style.display = 'none';
                     document.getElementById('createBtn').disabled = false;
                     document.getElementById('refreshBtn').disabled = true;
@@ -742,7 +860,7 @@
         }
 
         function loadActiveSessions() {
-            fetch('/api/checkin/active')
+            authFetch('/api/checkin/active')
                 .then(response => response.json())
                 .then(result => {
                     if (result.code === 200 && result.data) {
@@ -772,10 +890,23 @@
                         <div class="mt-2 text-sm text-gray-500">
                             已签到: ${session.checkedCount || 0} / ${session.totalCount || 0}
                         </div>
-                        <button onclick="closeSessionById(${session.id})" class="btn btn-sm btn-danger mt-2">结束签到</button>
+                        <button onclick="restoreSession(${session.sessionId || session.id})" class="btn btn-sm btn-primary mt-2">恢复二维码</button>
+                        <button onclick="closeSessionById(${session.sessionId || session.id})" class="btn btn-sm btn-danger mt-2">结束签到</button>
                     </div>
                 </div>
             `).join('');
+
+            if (!currentSessionId && sessions.length > 0) {
+                setTimeout(() => {
+                    authFetch(`/api/checkin/session/id/${sessions[0].sessionId || sessions[0].id}`)
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.code === 200 && result.data) {
+                                showSession(result.data);
+                            }
+                        });
+                }, 500);
+            }
         }
 
         function closeSessionById(sessionId) {
@@ -801,6 +932,22 @@
                     }
                 });
             }
+        }
+
+        function restoreSession(sessionId) {
+            authFetch(`/api/checkin/session/id/${sessionId}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.code === 200 && result.data) {
+                        showSession(result.data);
+                    } else {
+                        alert('无法恢复签到会话');
+                    }
+                })
+                .catch(error => {
+                    console.error('恢复会话失败:', error);
+                    alert('恢复会话失败');
+                });
         }
     </script>
 </body>

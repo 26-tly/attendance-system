@@ -365,17 +365,30 @@
                     localStorage.setItem('token', data.data.token);
                     loginBtn.style.background = "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)";
                     
-                    // 根据用户角色跳转到不同页面
-                    const userRole = data.data.role || data.data.userRole;
-                    let redirectUrl = "/index";
-                    if (userRole === "student") {
-                        redirectUrl = "/student_index";
-                    } else if (userRole === "teacher") {
-                        redirectUrl = "/teacher_index";
+                    // 检查是否有重定向参数（用于扫码签到后跳转）
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirectUrl = urlParams.get('redirect');
+                    
+                    let finalRedirectUrl = "/index";
+                    if (redirectUrl) {
+                        // 如果有重定向参数，优先使用重定向URL
+                        finalRedirectUrl = decodeURIComponent(redirectUrl);
+                        // 如果重定向URL是扫码页面，跳转到扫码页面
+                        if (finalRedirectUrl.includes('/student_qrcode')) {
+                            finalRedirectUrl = "/student_qrcode";
+                        }
+                    } else {
+                        // 否则根据用户角色跳转到不同页面
+                        const userRole = data.data.role || data.data.userRole;
+                        if (userRole === "student") {
+                            finalRedirectUrl = "/student_index";
+                        } else if (userRole === "teacher") {
+                            finalRedirectUrl = "/teacher_index";
+                        }
                     }
                     
                     setTimeout(() => {
-                        location.href = redirectUrl;
+                        location.href = finalRedirectUrl;
                     }, 500);
                 } else {
                     document.getElementById("errorMessage").textContent = data.msg || "登录失败";

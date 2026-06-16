@@ -31,7 +31,9 @@ public class AuthInterceptor implements HandlerInterceptor {
     private static final String[] PUBLIC_PATHS = {
             "/login", "/register", "/api/auth/**", "/error",
             "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**",
-            "/user/login", "/user/register", "/user/checkUsername"
+            "/user/login", "/user/register", "/user/checkUsername",
+            "/api/server/**",
+            "/student_qrcode"
     };
 
     @Override
@@ -117,7 +119,10 @@ public class AuthInterceptor implements HandlerInterceptor {
             return uri.startsWith("/api/student/") || 
                    uri.startsWith("/api/attendance/user") || 
                    uri.startsWith("/api/leave/user") ||
-                   uri.startsWith("/api/checkin/validate");
+                   uri.startsWith("/api/checkin/validate") ||
+                   uri.startsWith("/api/checkin/session") ||
+                   uri.startsWith("/api/attendance") ||
+                   uri.startsWith("/api/course-student/user");
         }
 
         return false;

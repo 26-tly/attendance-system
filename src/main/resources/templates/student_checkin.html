@@ -350,13 +350,25 @@
 
     <script>
         let currentUser = null;
+        let authToken = '';
+
+        function authFetch(url, options = {}) {
+            options.headers = options.headers || {};
+            if (authToken) {
+                options.headers['Authorization'] = 'Bearer ' + authToken;
+            }
+            return fetch(url, options);
+        }
 
         function initUser() {
             const userDataStr = localStorage.getItem('currentUser');
-            if (!userDataStr) {
+            const token = localStorage.getItem('token');
+            if (!userDataStr || !token) {
                 location.href = '/login';
                 return false;
             }
+
+            authToken = token;
 
             try {
                 currentUser = JSON.parse(userDataStr);
@@ -364,6 +376,7 @@
                 if (!currentUser.userId || !currentUser.username) {
                     alert('用户信息不完整，请重新登录');
                     localStorage.removeItem('currentUser');
+                    localStorage.removeItem('token');
                     location.href = '/login';
                     return false;
                 }
@@ -371,6 +384,7 @@
                 if (currentUser.role && currentUser.role !== 'student' && currentUser.role !== 'STUDENT') {
                     alert('当前用户不是学生，无法访问学生端');
                     localStorage.removeItem('currentUser');
+                    localStorage.removeItem('token');
                     location.href = '/login';
                     return false;
                 }
@@ -382,6 +396,7 @@
             } catch (e) {
                 console.error('解析用户数据失败:', e);
                 localStorage.removeItem('currentUser');
+                localStorage.removeItem('token');
                 location.href = '/login';
                 return false;
             }
@@ -410,11 +425,20 @@
         }
 
         function loadCourses() {
-            fetch('/api/course')
+            const userId = document.getElementById('userId').value;
+            authFetch(`/api/course-student/user/${userId}/courses`)
                 .then(r => r.json())
                 .then(data => {
                     const select = document.getElementById('courseId');
-                    if (Array.isArray(data)) {
+                    select.innerHTML = '<option value="">请选择课程</option>';
+                    if (data.code === 200 && Array.isArray(data.data)) {
+                        data.data.forEach(course => {
+                            const option = document.createElement('option');
+                            option.value = course.courseId;
+                            option.textContent = course.courseName + ' - ' + (course.classroom || '未设置教室');
+                            select.appendChild(option);
+                        });
+                    } else if (Array.isArray(data)) {
                         data.forEach(course => {
                             const option = document.createElement('option');
                             option.value = course.courseId;

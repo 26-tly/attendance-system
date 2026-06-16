@@ -581,7 +581,9 @@
                     const courseIdFromUrl = urlParams.get('courseId');
                     if (courseIdFromUrl) {
                         select.value = courseIdFromUrl;
+                        currentCourseId = parseInt(courseIdFromUrl);
                         loadAttendanceStatus();
+                        loadCourseStudents();
                     }
                 });
         }

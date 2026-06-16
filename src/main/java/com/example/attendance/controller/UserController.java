@@ -106,7 +106,6 @@ public class UserController {
             if (dbUser != null) {
                 boolean passwordMatch = passwordEncoder.matches(user.getPassword(), dbUser.getPassword());
                 
-                // 向后兼容：如果BCrypt验证失败，且数据库中的密码不是BCrypt格式（不以$2开头），尝试明文匹配
                 if (!passwordMatch && dbUser.getPassword() != null && !dbUser.getPassword().startsWith("$2")) {
                     passwordMatch = user.getPassword().equals(dbUser.getPassword());
                 }

@@ -182,7 +182,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public Set<String> getPermissionCodesByUserId(Long userId) {
-        User user = userRepository.findById(userId).orElse(null);
+        User user = userRepository.findById(userId.intValue()).orElse(null);
         if (user == null) {
             return Collections.emptySet();
         }

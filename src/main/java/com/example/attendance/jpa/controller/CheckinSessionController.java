@@ -44,6 +44,11 @@ public class CheckinSessionController {
         return ResponseEntity.ok(sessionService.getSessionByCode(sessionCode));
     }
 
+    @GetMapping("/session/id/{sessionId}")
+    public ResponseEntity<Result<CheckinSession>> getSessionById(@PathVariable Long sessionId) {
+        return ResponseEntity.ok(sessionService.getSessionById(sessionId));
+    }
+
     @PostMapping("/validate")
     public ResponseEntity<Result<Map<String, Object>>> validateCheckin(@RequestBody Map<String, Object> request) {
         String sessionCode = (String) request.get("sessionCode");
@@ -73,7 +78,7 @@ public class CheckinSessionController {
     }
 
     @GetMapping("/active")
-    public ResponseEntity<Result<List<CheckinSession>>> getAllActiveSessions() {
+    public ResponseEntity<Result<List<Map<String, Object>>>> getAllActiveSessions() {
         return ResponseEntity.ok(sessionService.getAllActiveSessions());
     }
 
